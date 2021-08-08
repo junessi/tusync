@@ -1,0 +1,7 @@
+import re
+
+def is_date(s):
+    return re.search(r'[0-9]{8}', s) != None
+
+def is_stock_code(s):
+    return re.search(r'[0-9]{6}\.(SH|SZ)', s) != None
