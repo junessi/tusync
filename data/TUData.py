@@ -2,6 +2,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine, select, desc
 from data.Daily import Daily
+from common.config import read_config
 import time
 import tushare as ts
 import datetime
@@ -13,18 +14,22 @@ class TUData():
          Database data write, modify
     '''
     def __init__(self):
-        self.pro = ts.pro_api('d594093034879d9d4a15983372cd9d503863ae7d9bdc8b09655bc253')
-        self.engine = create_engine("mysql+pymysql://tushare:TUshare_pwd0$@localhost/tushare?charset=utf8mb4")
+        config = read_config()
+        self.pro = ts.pro_api(config["token"])
+        conn_str = "mysql+pymysql://{0}:{1}@{2}/{3}?charset={4}".format(config["mysql_user"],
+                                                                        config["mysql_password"],
+                                                                        config["mysql_server"],
+                                                                        config["mysql_db"],
+                                                                        config["mysql_charset"])
+        self.engine = create_engine(conn_str)
         self.session = sessionmaker(bind = self.engine)
 
     def get_stock_list(self, exchange):
         """
-            exchange: SH->上交所, SZ->深交所。
+            exchange: SSE->上交所, SZSE->深交所。
         """
-        if exchange == 'SH':
-            return self.pro.stock_basic(exchange = 'SSE')
-        elif exchange == 'SZ':
-            return self.pro.stock_basic(exchange = 'SZSE')
+        if exchange in ['SSE', 'SZSE']:
+            return self.pro.stock_basic(exchange)
 
         raise BaseException("Invalid exchange code '{0}'".format(exchange))
 
@@ -54,6 +59,10 @@ class TUData():
                 retries = retries - 1
                 print(e)
                 time.sleep(1)
+
+    def get_open_dates(self, exchange, start_date, end_date):
+        df = self.pro.trade_cal(exchange = exchange, is_open='1', start_date=start_date, end_date=end_date, fields='cal_date')
+        return [d for d in df.cal_date]
 
     def get_last_updated_date(self, stock_code):
         session = self.session()

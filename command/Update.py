@@ -1,6 +1,6 @@
 from command.State import State
 from common.helpers import is_date, is_stock_code
-from common.constants import DECADES
+from common.constants import DECADES, EXCHANGES
 from data.TUData import TUData
 from datetime import datetime
 
@@ -23,8 +23,7 @@ class UpdateTo:
     def update_to_date(self, stock_code, from_date, to_date):
         td = TUData()
         if stock_code == None:
-            exchanges = ['SH', 'SZ']
-            for e in exchanges:
+            for e in EXCHANGES:
                 stock_codes = td.get_stock_list(e).ts_code
                 print("update {0} stocks in exchange {1} from {2} to {3}".format(len(stock_codes), e, from_date, to_date))
                 for s in stock_codes:
@@ -122,5 +121,18 @@ class Update:
         return self.state
 
     def update_all(self):
-        print("update all")
+        td = TUData()
+        today = int(datetime.today().strftime("%Y%m%d"))
+        for ex in EXCHANGES:
+            for decade in DECADES:
+                for y in range(0, 10):
+                    year_start = decade["start"] + y * 10000
+                    year_end   = decade["end"] - (90000 - y * 10000)
+                    if year_start > today:
+                        break
+                    if year_end > today:
+                        year_end = today
+                    open_dates = td.get_open_dates(ex, str(year_start), str(year_end))
+                    for odate in open_dates:
+                        td.update_daily("", str(odate))
 
