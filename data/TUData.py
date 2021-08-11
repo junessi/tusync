@@ -3,6 +3,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine, select, desc
 from data.Daily import Daily
 from common.config import read_config
+import math
 import time
 import tushare as ts
 import datetime
@@ -22,7 +23,7 @@ class TUData():
                                                                         config["mysql_db"],
                                                                         config["mysql_charset"])
         self.engine = create_engine(conn_str)
-        self.session = sessionmaker(bind = self.engine)
+        self.session = sessionmaker(bind = self.engine, autoflush = False)
 
     def get_stock_list(self, exchange):
         """
@@ -33,12 +34,15 @@ class TUData():
 
         raise BaseException("Invalid exchange code '{0}'".format(exchange))
 
-    def update_daily(self, ts_code, start_dt = None, end_dt = None):
+    def update_daily(self, ts_code = '', trade_date = '', start_dt = '', end_dt = ''):
         retries = 3
         while retries > 0:
             try:
                 fields = 'ts_code,trade_date,open,high,low,close,pre_close,change,pct_chg,vol,amount'
-                result = self.pro.daily(ts_code=ts_code, start_date=start_dt, end_date=end_dt, fields = fields)
+                if trade_date:
+                    result = self.pro.daily(ts_code=ts_code, trade_date=trade_date, fields = fields)
+                else:
+                    result = self.pro.daily(ts_code=ts_code, start_date=start_dt, end_date=end_dt, fields = fields)
                 session = self.session()
                 for i in range(0, len(result.ts_code)):
                     session.merge(Daily(ts_code       = result.ts_code[i],
@@ -51,7 +55,7 @@ class TUData():
                                         change        = result.change[i],
                                         pct_chg       = result.pct_chg[i],
                                         vol           = result.vol[i],
-                                        amount        = result.amount[i]))
+                                        amount        = None if math.isnan(result.amount[i]) else result.amount[i]))
 
                 session.commit()
                 retries = 0

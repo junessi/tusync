@@ -3,6 +3,7 @@ from common.helpers import is_date, is_stock_code
 from common.constants import DECADES, EXCHANGES
 from data.TUData import TUData
 from datetime import datetime
+import time
 
 class UpdateTo:
     def __init__(self, params, stock_code, from_date):
@@ -32,10 +33,10 @@ class UpdateTo:
                             continue
 
                         print("update {0} from {1} to {2}".format(s, from_date, to_date))
-                        td.update_daily(s, from_date, to_date)
+                        td.update_daily(ts_code = s, start_date = from_date, end_date = to_date)
         else:
             print("update {0} from {1} to {2} ".format(stock_code, from_date, to_date))
-            td.update_daily(stock_code, from_date, to_date)
+            td.update_daily(ts_code = stock_code, start_date = from_date, end_date = to_date)
 
         return State.DONE
 
@@ -71,10 +72,10 @@ class UpdateFrom:
                             continue
 
                         print("update {0} from {1} ".format(s, from_date))
-                        td.update_daily(s, from_date)
+                        td.update_daily(ts_code = s, start_date = from_date)
         else:
             print("update {0} from {1} ".format(stock_code, from_date))
-            td.update_daily(stock_code, from_date)
+            td.update_daily(ts_code = stock_code, start_date = from_date)
         return State.DONE
 
 
@@ -97,7 +98,7 @@ class UpdateStock:
 
                     from_date = "{0}".format(last_date)
                     to_date = "{0}".format(today)
-                    td.update_daily(stock_code, from_date, to_date)
+                    td.update_daily(ts_code = stock_code, start_date = from_date, end_date = to_date)
 
     def get_state(self):
         return self.state
@@ -123,7 +124,7 @@ class Update:
     def update_all(self):
         td = TUData()
         today = int(datetime.today().strftime("%Y%m%d"))
-        for ex in EXCHANGES:
+        for exchange in EXCHANGES:
             for decade in DECADES:
                 for y in range(0, 10):
                     year_start = decade["start"] + y * 10000
@@ -132,7 +133,14 @@ class Update:
                         break
                     if year_end > today:
                         year_end = today
-                    open_dates = td.get_open_dates(ex, str(year_start), str(year_end))
+
+                    start_time = time.time()
+                    open_dates = td.get_open_dates(exchange, str(year_start), str(year_end))
                     for odate in open_dates:
-                        td.update_daily("", str(odate))
+                        td.update_daily(trade_date = str(odate))
+                    end_time = time.time()
+                    print("updated stocks at {0} between {1} and {2}, took {3} second(s).".format(exchange,
+                                                                                                  year_start,
+                                                                                                  year_end,
+                                                                                                  end_time - start_time))
 
