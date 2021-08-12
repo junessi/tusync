@@ -1,6 +1,7 @@
 from command.State import State
 from common.helpers import is_date, is_stock_code
 from common.constants import DECADES, EXCHANGES
+from common.async_updater import AsyncUpdater
 from data.TUData import TUData
 from datetime import datetime
 import time
@@ -136,8 +137,10 @@ class Update:
 
                     start_time = time.time()
                     open_dates = td.get_open_dates(exchange, str(year_start), str(year_end))
-                    for odate in open_dates:
-                        td.update_daily(trade_date = str(odate))
+                    # for odate in open_dates:
+                        # td.update_daily(trade_date = str(odate))
+                    async_updater = AsyncUpdater(open_dates)
+                    async_updater.run()
                     end_time = time.time()
                     print("updated stocks at {0} between {1} and {2}, took {3} second(s).".format(exchange,
                                                                                                   year_start,
