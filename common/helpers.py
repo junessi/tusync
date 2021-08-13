@@ -1,5 +1,8 @@
 import re
 
+def is_year(s):
+    return re.search(r'[12][09][0-9]{2}', s) != None
+
 def is_date(s):
     return re.search(r'[0-9]{8}', s) != None
 

@@ -36,6 +36,7 @@ class TUData():
 
     def update_daily(self, ts_code = '', trade_date = '', start_dt = '', end_dt = ''):
         retries = 3
+        num_updated = 0
         while retries > 0:
             try:
                 fields = 'ts_code,trade_date,open,high,low,close,pre_close,change,pct_chg,vol,amount'
@@ -44,7 +45,8 @@ class TUData():
                 else:
                     result = self.pro.daily(ts_code=ts_code, start_date=start_dt, end_date=end_dt, fields = fields)
                 session = self.session()
-                for i in range(0, len(result.ts_code)):
+                num_stocks = len(result.ts_code)
+                for i in range(0, num_stocks):
                     session.merge(Daily(ts_code       = result.ts_code[i],
                                         trade_date    = result.trade_date[i],
                                         open          = result.open[i],
@@ -58,15 +60,18 @@ class TUData():
                                         amount        = None if math.isnan(result.amount[i]) else result.amount[i]))
 
                 session.commit()
+                num_updated = num_stocks
                 retries = 0
             except Exception as e:
                 retries = retries - 1
                 print(e)
-                time.sleep(1)
+                time.sleep(10)
+
+        return num_updated
 
     def get_open_dates(self, exchange, start_date, end_date):
         df = self.pro.trade_cal(exchange = exchange, is_open='1', start_date=start_date, end_date=end_date, fields='cal_date')
-        return [d for d in df.cal_date]
+        return [date for date in df.cal_date]
 
     def get_last_updated_date(self, stock_code):
         session = self.session()

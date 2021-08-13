@@ -1,5 +1,5 @@
 from command.State import State
-from common.helpers import is_date, is_stock_code
+from common.helpers import is_date, is_stock_code, is_year
 from common.constants import DECADES, EXCHANGES
 from common.async_updater import AsyncUpdater
 from data.TUData import TUData
@@ -114,6 +114,8 @@ class Update:
             self.state = UpdateStock(params).get_state()
         elif is_date(param):
             self.state = UpdateFrom(params).get_state()
+        elif is_year(param):
+            self.state = self.update_all_in_year(param)
         elif len(param) == 0:
             self.state = self.update_all()
         else:
@@ -137,13 +139,30 @@ class Update:
 
                     start_time = time.time()
                     open_dates = td.get_open_dates(exchange, str(year_start), str(year_end))
-                    # for odate in open_dates:
-                        # td.update_daily(trade_date = str(odate))
-                    async_updater = AsyncUpdater(open_dates)
-                    async_updater.run()
+                    AsyncUpdater().update_all_stocks_on_dates(open_dates)
                     end_time = time.time()
                     print("updated stocks at {0} between {1} and {2}, took {3} second(s).".format(exchange,
                                                                                                   year_start,
                                                                                                   year_end,
                                                                                                   end_time - start_time))
+
+    def update_all_in_year(self, year):
+        td = TUData()
+        today = datetime.today().strftime("%Y%m%d")
+        year_start = "{0}0101".format(year)
+        year_end = "{0}1231".format(year)
+        if int(year_start) > int(today):
+            return
+        if int(year_end) > int(today):
+            year_end = today
+        for exchange in EXCHANGES:
+            start_time = time.time()
+            open_dates = td.get_open_dates(exchange, year_start, year_end)
+            num_updated = AsyncUpdater().update_all_stocks_on_dates(open_dates)
+            end_time = time.time()
+            print("updated {0} stocks at {1} between {2} and {3}, took {4} second(s).".format(num_updated,
+                                                                                              exchange,
+                                                                                              year_start,
+                                                                                              year_end,
+                                                                                              end_time - start_time))
 
