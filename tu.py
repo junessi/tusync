@@ -9,5 +9,8 @@ import datetime
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 if __name__ == "__main__":
-    Command(Parameters(sys.argv[1:]))
+    try:
+        Command(Parameters(sys.argv[1:]))
+    except BaseException as e:
+        print(e)
 

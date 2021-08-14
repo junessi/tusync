@@ -8,3 +8,6 @@ def is_date(s):
 
 def is_stock_code(s):
     return re.search(r'[0-9]{6}\.(SH|SZ)', s) != None
+
+def is_negative_number(s):
+    return re.search(r'-[0-9]+$', s) != None

@@ -1,5 +1,5 @@
 from command.State import State
-from common.helpers import is_date, is_stock_code, is_year
+import common.helpers as helpers
 from common.constants import DECADES, EXCHANGES
 from common.async_updater import AsyncUpdater
 from data.TUData import TUData
@@ -110,59 +110,73 @@ class Update:
         self.state = State.NULL
         
         param = params.current()
-        if is_stock_code(param):
+        if helpers.is_stock_code(param):
             self.state = UpdateStock(params).get_state()
-        elif is_date(param):
+        elif helpers.is_date(param):
             self.state = UpdateFrom(params).get_state()
-        elif is_year(param):
+        elif helpers.is_year(param):
             self.state = self.update_all_in_year(param)
-        elif len(param) == 0:
-            self.state = self.update_all()
+        elif param == 'full':
+            self.state = self.update_full()
+        elif param == 'today' or len(param) == 0:
+            self.state = self.update_last_n_days(1)
+        elif helpers.is_negative_number(param):
+            self.state = self.update_last_n_days(int(param[1:]))
         else:
-            raise BaseException("Invalid stock code or date: '{0}'".format(param))
+            raise BaseException("Invalid input: '{0}'".format(param))
 
     def get_state(self):
         return self.state
 
-    def update_all(self):
-        td = TUData()
+    def update_full(self):
+        """
+            update all stocks in all exchanges in history
+            SSE opened on 19901219
+            SZSE opened on 19901201
+        """
         today = int(datetime.today().strftime("%Y%m%d"))
         for exchange in EXCHANGES:
             for decade in DECADES:
-                for y in range(0, 10):
-                    year_start = decade["start"] + y * 10000
-                    year_end   = decade["end"] - (90000 - y * 10000)
-                    if year_start > today:
-                        break
-                    if year_end > today:
-                        year_end = today
-
-                    start_time = time.time()
-                    open_dates = td.get_open_dates(exchange, str(year_start), str(year_end))
-                    AsyncUpdater().update_all_stocks_on_dates(open_dates)
-                    end_time = time.time()
-                    print("updated stocks at {0} between {1} and {2}, took {3} second(s).".format(exchange,
-                                                                                                  year_start,
-                                                                                                  year_end,
-                                                                                                  end_time - start_time))
+                for year in decade['years']:
+                    self.update_all_in_year(year)
 
     def update_all_in_year(self, year):
-        td = TUData()
         today = datetime.today().strftime("%Y%m%d")
-        year_start = "{0}0101".format(year)
-        year_end = "{0}1231".format(year)
-        if int(year_start) > int(today):
+        date_from = "{0}0101".format(year)
+        date_to = "{0}1231".format(year)
+        if int(date_from) > int(today):
             return
-        if int(year_end) > int(today):
-            year_end = today
+        if int(date_to) > int(today):
+            date_to = today
         for exchange in EXCHANGES:
-            start_time = time.time()
-            open_dates = td.get_open_dates(exchange, year_start, year_end)
-            num_updated = AsyncUpdater().update_all_stocks_on_dates(open_dates)
-            end_time = time.time()
-            print("updated {0} stocks at {1} between {2} and {3}, took {4} second(s).".format(num_updated,
-                                                                                              exchange,
-                                                                                              year_start,
-                                                                                              year_end,
-                                                                                              end_time - start_time))
+            self.update_exchange_on_date_range(exchange, date_from, date_to)
+
+    def update_last_n_days(self, n):
+        """
+            update stocks in all exchanges in last n days, include today
+            examples:
+                n == 1: today
+                n == 2: today and yesterday
+                ...
+        """
+        today = datetime.today().strftime("%Y%m%d")
+        date_from = "{0}".format(int(today) - (n - 1))
+        date_to = "{0}".format(today)
+        for exchange in EXCHANGES:
+            self.update_exchange_on_date_range(exchange, date_from, date_to)
+
+    def update_exchange_on_date_range(self, exchange, date_from, date_to):
+        td = TUData()
+        start_time = time.time()
+        open_dates = td.get_open_dates(exchange, date_from, date_to)
+        num_updated = self.update_exchange_on_dates(open_dates)
+        end_time = time.time()
+        print("updated {0} stocks at {1} from {2}, to {3}, took {4} second(s).".format(num_updated,
+                                                                                       exchange,
+                                                                                       date_from,
+                                                                                       date_to,
+                                                                                       end_time - start_time))
+
+    def update_exchange_on_dates(self, dates):
+        return AsyncUpdater().update_all_stocks_on_dates(dates)
 
