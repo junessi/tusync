@@ -9,6 +9,7 @@ class AsyncUpdater():
         self.td = TUData()
         self.queue_lock = threading.Lock()
         self.call_ts_lock = threading.Lock()
+        self.num_of_stocks_updated_lock = threading.Lock()
         self.set_call_limit(500, 60) # 500 calls/min
 
     def updater(self, updater_id):
@@ -22,7 +23,10 @@ class AsyncUpdater():
                 self.wait_for_available_call()
 
                 # print("updater {0} got {1}".format(updater_id, date))
-                self.num_of_stocks_updated += self.td.update_daily(trade_date = str(date))
+                num_updated = self.td.update_daily(trade_date = str(date))
+                self.num_of_stocks_updated_lock.acquire()
+                self.num_of_stocks_updated += num_updated
+                self.num_of_stocks_updated_lock.release()
                 # time.sleep(5)
                 # print("updater {0} finished updating {1}".format(updater_id, date))
             except queue.Empty:
