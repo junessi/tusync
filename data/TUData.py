@@ -22,7 +22,7 @@ class TUData():
                                                                         config["mysql_server"],
                                                                         config["mysql_db"],
                                                                         config["mysql_charset"])
-        self.engine = create_engine(conn_str)
+        self.engine = create_engine(conn_str, pool_size=64, max_overflow=64)
         self.session = sessionmaker(bind = self.engine, autoflush = False)
 
     def get_stock_list(self, exchange):
