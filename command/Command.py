@@ -1,5 +1,6 @@
 from command.State import State
 from command.Update import Update
+import common.usages as usages
 
 class Command:
     def __init__(self, params):
@@ -7,9 +8,14 @@ class Command:
 
         cmd = params.next()
         if cmd == 'update':
-            self.state = Update(params).get_state()
+            try:
+                self.state = Update(params).get_state()
+            except BaseException as e:
+                print(e)
+                usages.printUpdateUsage()
         else:
-            raise BaseException("Unknown command: '{0}'".format(cmd))
+            print("Unknown command: '{0}'".format(cmd))
+            usages.printCommands()
 
     def state(self):
         return self.state

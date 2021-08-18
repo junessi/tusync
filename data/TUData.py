@@ -35,7 +35,7 @@ class TUData():
         raise BaseException("Invalid exchange code '{0}'".format(exchange))
 
     def update_daily(self, ts_code = '', trade_date = '', start_dt = '', end_dt = ''):
-        retries = 3
+        retries = 10 # max retries
         num_updated = 0
         while retries > 0:
             try:
@@ -61,11 +61,15 @@ class TUData():
 
                 session.commit()
                 num_updated = num_stocks
-                retries = 0
+                break
             except Exception as e:
                 retries = retries - 1
                 print(e)
                 time.sleep(10)
+
+        if reties == 0:
+            print("update_daily(ts_code = '{0}', trade_date = '{1}', start_dt = '{2}', end_dt = '{3}') failed."
+                  .format(ts_code, trade_date, start_dt, end_dt))
 
         return num_updated
 
