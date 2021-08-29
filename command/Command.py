@@ -11,10 +11,10 @@ class Command:
             try:
                 self.state = Update(params).get_state()
             except BaseException as e:
-                print(e)
+                print("Command: {}".format(e))
                 usages.printUpdateUsage()
         else:
-            print("Unknown command: '{0}'".format(cmd))
+            print("Command: Unknown command: '{0}'".format(cmd))
             usages.printCommands()
 
     def state(self):

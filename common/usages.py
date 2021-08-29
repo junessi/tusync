@@ -1,5 +1,5 @@
 def printUpdateUsage():
-    print("update command must be used as one of the following:")
+    print("Usages:")
     print("tu.py update")
     print("  - same as 'update today'")
     print("tu.py update [full|today|-N]")

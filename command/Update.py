@@ -178,5 +178,9 @@ class Update:
                                                                                        end_time - start_time))
 
     def update_exchange_on_dates(self, dates):
-        return AsyncUpdater().update_all_stocks_on_dates(dates)
+        u = AsyncUpdater()
+        num_updated = u.update_all_stocks_on_dates(dates)
+
+        return num_updated
+
 
