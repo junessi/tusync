@@ -14,9 +14,9 @@ class AsyncUpdater():
         while True:
             try:
                 self.queue_lock.acquire()
+
                 date = self.queue.get_nowait() # will throw queue.Empty when self.queue is empty
                 self.queue.task_done()
-                self.queue_lock.release()
 
                 # print("updater {0} got {1}".format(updater_id, date))
                 num_updated = self.td.update_daily(trade_date = str(date))
@@ -29,10 +29,10 @@ class AsyncUpdater():
             except queue.Empty:
                 # queue is empty, exit thread.
                 # print("Exception: queue empty")
-                self.queue_lock.release()
                 break
             except Exception as e:
                 print("AsyncUpdater.update(): {}".format(e))
+            finally:
                 self.queue_lock.release()
 
     def start_update(self, dates):

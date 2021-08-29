@@ -47,7 +47,7 @@ class TUData():
 
             return self.pro.stock_basic(exchange)
 
-        raise BaseException("Invalid exchange code '{0}'".format(exchange))
+        raise Exception("Invalid exchange code '{0}'".format(exchange))
 
     def update_daily(self, ts_code = '', trade_date = '', start_dt = '', end_dt = ''):
         retries = 10 # max retries
@@ -115,7 +115,7 @@ class TUData():
 
             while TUData.call_timestamps.full():
                 # remove all time stamps older than TUData.seconds
-                sixty_seconds_ago = time.time() - TUData.seconds
+                sixty_seconds_ago = int(time.time() - TUData.seconds)
                 timestamps_list = list(TUData.call_timestamps.queue)
                 n = len(timestamps_list)
                 # print("timestamps queue size: {0}".format(n))
