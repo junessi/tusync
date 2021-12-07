@@ -49,7 +49,7 @@ class TUData():
 
         raise Exception("Invalid exchange code '{0}'".format(exchange))
 
-    def update_daily(self, ts_code = '', trade_date = '', start_dt = '', end_dt = ''):
+    def update_daily(self, ts_code = '', trade_date = '', start_date = '', end_date = ''):
         retries = 10 # max retries
         num_updated = 0
         while retries > 0:
@@ -60,7 +60,7 @@ class TUData():
                 if trade_date:
                     result = self.pro.daily(ts_code=ts_code, trade_date=trade_date, fields = fields)
                 else:
-                    result = self.pro.daily(ts_code=ts_code, start_date=start_dt, end_date=end_dt, fields = fields)
+                    result = self.pro.daily(ts_code=ts_code, start_date=start_date, end_date=end_date, fields = fields)
 
                 with self.session() as session:
                     num_updated = self.save_dailies(session, result)
@@ -72,8 +72,8 @@ class TUData():
                 time.sleep(10)
 
         if retries == 0:
-            print("update_daily(ts_code = '{0}', trade_date = '{1}', start_dt = '{2}', end_dt = '{3}') failed."
-                  .format(ts_code, trade_date, start_dt, end_dt))
+            print("update_daily(ts_code = '{0}', trade_date = '{1}', start_date = '{2}', end_date = '{3}') failed."
+                  .format(ts_code, trade_date, start_date, end_date))
 
         return num_updated
 

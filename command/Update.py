@@ -14,7 +14,7 @@ class UpdateTo:
         if len(to_date) == 0:
             # no date specified -> update from a specified date to today
             return
-        elif is_date(to_date):
+        elif helpers.is_date(to_date):
             self.state = self.update_to_date(stock_code, from_date, to_date)
         else:
             raise BaseException("Unknown from date: '{0}'".format(to_date))
@@ -50,7 +50,7 @@ class UpdateFrom:
         if len(from_date) == 0:
             # no date specified -> update all
             return
-        elif is_date(from_date):
+        elif helpers.is_date(from_date):
             self.state = UpdateTo(params, stock_code, from_date).get_state()
             if self.state == State.NULL:
                 self.state = self.update_from_date(stock_code, from_date)
