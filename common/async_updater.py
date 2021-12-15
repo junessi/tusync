@@ -18,7 +18,7 @@ class AsyncUpdater():
                 [exchange, date] = self.queue.get_nowait() # will throw queue.Empty when self.queue is empty
                 self.queue.task_done()
 
-                print("updater {0} got {1}:{2}".format(updater_id, exchange, date))
+                # print("updater {0} got {1}:{2}".format(updater_id, exchange, date))
                 num_updated = self.td.update_daily(exchange, trade_date = str(date))
                 time.sleep(1)
                 self.num_of_stocks_updated_lock.acquire()
