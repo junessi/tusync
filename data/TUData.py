@@ -36,7 +36,11 @@ class TUData():
                                     # max_overflow = 20
                                     poolclass = NullPool
                                     )
-        self.session = sessionmaker(bind = self.engine, autoflush = False)
+
+        self.session_factory = sessionmaker(bind = self.engine)
+
+    def get_db_session(self):
+        return self.session_factory()
 
     def get_stock_list(self, exchange):
         """
@@ -59,8 +63,7 @@ class TUData():
 
                 fields = 'ts_code,trade_date,open,high,low,close,pre_close,change,pct_chg,vol,amount'
                 if trade_date:
-                    result = self.pro.daily(trade_date = trade_date,
-                                            fields = fields)
+                    result = self.pro.daily(trade_date = trade_date, fields = fields)
                 else:
                     if stock_code:
                         stock_code = "{0}.{1}".format(stock_code, helpers.get_stock_code_ending(exchange))
@@ -70,10 +73,7 @@ class TUData():
                                             end_date = end_date,
                                             fields = fields)
 
-
-                with self.session() as session:
-                    num_updated = self.save_dailies(session, result)
-
+                num_updated = self.save_dailies(result)
                 break
             except Exception as e:
                 retries = retries - 1
@@ -86,40 +86,51 @@ class TUData():
 
         return num_updated
 
-    def save_dailies(self, session, result):
+    def save_dailies(self, result):
+        session = self.get_db_session()
         num_stocks = len(result.ts_code)
-        for i in range(0, num_stocks):
-            stock_code = result.ts_code[i]
-            daily = None
-            if stock_code.endswith('.SH'):
-                daily = DailySSE(stock_code    = stock_code[:-3],
-                                 trade_date    = result.trade_date[i],
-                                 open          = result.open[i],
-                                 high          = result.high[i],
-                                 low           = result.low[i],
-                                 close         = result.close[i],
-                                 pre_close     = result.pre_close[i],
-                                 change        = result.change[i],
-                                 pct_chg       = result.pct_chg[i],
-                                 vol           = result.vol[i],
-                                 amount        = None if math.isnan(result.amount[i]) else result.amount[i])
-            elif stock_code.endswith('.SZ'):
-                daily = DailySZSE(stock_code    = stock_code[:-3],
-                                  trade_date    = result.trade_date[i],
-                                  open          = result.open[i],
-                                  high          = result.high[i],
-                                  low           = result.low[i],
-                                  close         = result.close[i],
-                                  pre_close     = result.pre_close[i],
-                                  change        = result.change[i],
-                                  pct_chg       = result.pct_chg[i],
-                                  vol           = result.vol[i],
-                                  amount        = None if math.isnan(result.amount[i]) else result.amount[i])
-            else:
-                continue # ignore this stock code
-            session.merge(daily)
 
-        session.commit()
+        try:
+            for i in range(0, num_stocks):
+                stock_code = result.ts_code[i]
+                daily = None
+                if stock_code.endswith('.SH'):
+                    daily = DailySSE(stock_code    = stock_code[:-3],
+                                     trade_date    = result.trade_date[i],
+                                     open          = result.open[i],
+                                     high          = result.high[i],
+                                     low           = result.low[i],
+                                     close         = result.close[i],
+                                     pre_close     = result.pre_close[i],
+                                     change        = result.change[i],
+                                     pct_chg       = result.pct_chg[i],
+                                     vol           = result.vol[i],
+                                     amount        = None if math.isnan(result.amount[i]) else result.amount[i])
+                elif stock_code.endswith('.SZ'):
+                    daily = DailySZSE(stock_code    = stock_code[:-3],
+                                      trade_date    = result.trade_date[i],
+                                      open          = result.open[i],
+                                      high          = result.high[i],
+                                      low           = result.low[i],
+                                      close         = result.close[i],
+                                      pre_close     = result.pre_close[i],
+                                      change        = result.change[i],
+                                      pct_chg       = result.pct_chg[i],
+                                      vol           = result.vol[i],
+                                      amount        = None if math.isnan(result.amount[i]) else result.amount[i])
+                else:
+                    continue # ignore this stock code
+
+                # This merge() does not seem to be asynchronous between threads, fix it later.
+                session.merge(daily)
+        except Exception as e:
+            print("save_dailies: caught exception: {0}".format(e))
+            session.rollback()
+        finally:
+            print("start commit")
+            session.commit()
+        print("finished saving {0} stocks in to database".format(num_stocks))
+
         return num_stocks
 
     def get_open_dates(self, exchange, start_date, end_date):
@@ -129,11 +140,11 @@ class TUData():
         return [date for date in df.cal_date]
 
     def get_last_updated_date(self, exchange, stock_code):
-        with self.session() as session:
+        with self.get_db_session() as session:
             if exchange == 'SSE':
                 for d in session.query(DailySSE).filter_by(ts_code = stock_code).order_by(desc(DailySSE.trade_date)).limit(1):
                     return d.trade_date
-            if exchange == 'SZSE':
+            elif exchange == 'SZSE':
                 for d in session.query(DailySZSE).filter_by(ts_code = stock_code).order_by(desc(DailySZSE.trade_date)).limit(1):
                     return d.trade_date
 
@@ -164,7 +175,8 @@ class TUData():
 
                 time.sleep(1)
 
-            TUData.call_timestamps.put(int(time.time()))
+            t = int(time.time())
+            TUData.call_timestamps.put(t)
         except Exception as e:
             print("wait_for_available_call(): {}".format(e))
         finally:

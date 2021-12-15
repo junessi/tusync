@@ -17,9 +17,11 @@ class AsyncUpdater():
 
                 [exchange, date] = self.queue.get_nowait() # will throw queue.Empty when self.queue is empty
                 self.queue.task_done()
+                self.queue_lock.release()
 
-                # print("updater {0} got {1}:{2}".format(updater_id, exchange, date))
+                print("updater {0} got {2}.{1}".format(updater_id, exchange, date))
                 num_updated = self.td.update_daily(exchange, trade_date = str(date))
+                print("updater {0} finished update_daily".format(updater_id))
                 time.sleep(1)
                 self.num_of_stocks_updated_lock.acquire()
                 self.num_of_stocks_updated += num_updated
@@ -29,17 +31,16 @@ class AsyncUpdater():
             except queue.Empty:
                 # queue is empty, exit thread.
                 # print("Exception: queue empty")
+                self.queue_lock.release()
                 break
             except Exception as e:
                 print("AsyncUpdater.update(): {}".format(e))
-            finally:
-                self.queue_lock.release()
 
     def start_update(self, exchange, dates):
         self.queue = queue.Queue()
 
         for date in dates:
-            self.queue.put((exchange, date))
+            self.queue.put((exchange, date)) # put a tuple
 
         nparallel = self.num_updaters if self.num_updaters < self.queue.qsize() else self.queue.qsize()
         updaters = list()
