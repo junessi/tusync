@@ -11,12 +11,16 @@ def printUpdateUsage():
     print("tu.py update [stock code] [year]")
     print("  - update specified stock in specified year.")
     print("tu.py update [stock code] [start date]")
-    print("  - update specified stock from specified date to today.")
+    print("  - update specified stock from start date to today.")
     print("tu.py update [stock code] [start date] [end date]")
-    print("  - update specified stock in specified date range.")
+    print("  - update specified stock in a date range.")
+    print("tu.py update [exchange] [start date]")
+    print("  - update all stocks in specified exchange from start date to today.")
+    print("tu.py update [exchange] [start date] [end date]")
+    print("  - update all stocks in specified exchange in a date range.")
     print("tu.py update [start date] [end date]")
-    print("  - update all stocks in all exchanges in specified date range.")
+    print("  - update all stocks in all exchanges in a date range.")
 
 
 def printCommands():
-    print("tu.py [update]")
+    print("tusync [update|fetch]")
