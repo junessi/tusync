@@ -1,15 +1,16 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import NullPool
-from sqlalchemy import create_engine, select, desc
-from data.Daily import Daily
+from sqlalchemy import create_engine, desc
+from common.constants import EXCHANGES
+from data.Daily import DailySSE, DailySZSE
 from common.config import read_config
+import common.helpers as helpers
 import math
 import queue
 import threading
 import time
 import tushare as ts
-import datetime
 
 Base = declarative_base()
 
@@ -42,14 +43,14 @@ class TUData():
              SSE: 上交所
             SZSE: 深交所
         """
-        if exchange in ['SSE', 'SZSE']:
+        if exchange in EXCHANGES:
             self.wait_for_available_call()
 
-            return self.pro.stock_basic(exchange)
+            return self.pro.stock_basic(exchange = exchange)
 
         raise Exception("Invalid exchange code '{0}'".format(exchange))
 
-    def update_daily(self, ts_code = '', trade_date = '', start_date = '', end_date = ''):
+    def update_daily(self, exchange = '', stock_code = '', trade_date = '', start_date = '', end_date = ''):
         retries = 10 # max retries
         num_updated = 0
         while retries > 0:
@@ -58,9 +59,17 @@ class TUData():
 
                 fields = 'ts_code,trade_date,open,high,low,close,pre_close,change,pct_chg,vol,amount'
                 if trade_date:
-                    result = self.pro.daily(ts_code=ts_code, trade_date=trade_date, fields = fields)
+                    result = self.pro.daily(trade_date = trade_date,
+                                            fields = fields)
                 else:
-                    result = self.pro.daily(ts_code=ts_code, start_date=start_date, end_date=end_date, fields = fields)
+                    if stock_code:
+                        stock_code = "{0}.{1}".format(stock_code, helpers.get_stock_code_ending(exchange))
+
+                    result = self.pro.daily(ts_code = stock_code,
+                                            start_date = start_date,
+                                            end_date = end_date,
+                                            fields = fields)
+
 
                 with self.session() as session:
                     num_updated = self.save_dailies(session, result)
@@ -72,26 +81,43 @@ class TUData():
                 time.sleep(10)
 
         if retries == 0:
-            print("update_daily(ts_code = '{0}', trade_date = '{1}', start_date = '{2}', end_date = '{3}') failed."
-                  .format(ts_code, trade_date, start_date, end_date))
+            print("update_daily(exchange = '{0}', stock_code = '{1}', trade_date = '{2}', start_date = '{3}', end_date = '{4}') failed."
+                  .format(stock_code, trade_date, start_date, end_date))
 
         return num_updated
 
     def save_dailies(self, session, result):
-        # print(self.engine.pool.status())
         num_stocks = len(result.ts_code)
         for i in range(0, num_stocks):
-            session.merge(Daily(ts_code       = result.ts_code[i],
-                                trade_date    = result.trade_date[i],
-                                open          = result.open[i],
-                                high          = result.high[i],
-                                low           = result.low[i],
-                                close         = result.close[i],
-                                pre_close     = result.pre_close[i],
-                                change        = result.change[i],
-                                pct_chg       = result.pct_chg[i],
-                                vol           = result.vol[i],
-                                amount        = None if math.isnan(result.amount[i]) else result.amount[i]))
+            stock_code = result.ts_code[i]
+            daily = None
+            if stock_code.endswith('.SH'):
+                daily = DailySSE(stock_code    = stock_code[:-3],
+                                 trade_date    = result.trade_date[i],
+                                 open          = result.open[i],
+                                 high          = result.high[i],
+                                 low           = result.low[i],
+                                 close         = result.close[i],
+                                 pre_close     = result.pre_close[i],
+                                 change        = result.change[i],
+                                 pct_chg       = result.pct_chg[i],
+                                 vol           = result.vol[i],
+                                 amount        = None if math.isnan(result.amount[i]) else result.amount[i])
+            elif stock_code.endswith('.SZ'):
+                daily = DailySZSE(stock_code    = stock_code[:-3],
+                                  trade_date    = result.trade_date[i],
+                                  open          = result.open[i],
+                                  high          = result.high[i],
+                                  low           = result.low[i],
+                                  close         = result.close[i],
+                                  pre_close     = result.pre_close[i],
+                                  change        = result.change[i],
+                                  pct_chg       = result.pct_chg[i],
+                                  vol           = result.vol[i],
+                                  amount        = None if math.isnan(result.amount[i]) else result.amount[i])
+            else:
+                continue # ignore this stock code
+            session.merge(daily)
 
         session.commit()
         return num_stocks
@@ -102,10 +128,14 @@ class TUData():
         df = self.pro.trade_cal(exchange = exchange, is_open='1', start_date=start_date, end_date=end_date, fields='cal_date')
         return [date for date in df.cal_date]
 
-    def get_last_updated_date(self, stock_code):
+    def get_last_updated_date(self, exchange, stock_code):
         with self.session() as session:
-            for d in session.query(Daily).filter_by(ts_code = stock_code).order_by(desc(Daily.trade_date)).limit(1):
-                return d.trade_date
+            if exchange == 'SSE':
+                for d in session.query(DailySSE).filter_by(ts_code = stock_code).order_by(desc(DailySSE.trade_date)).limit(1):
+                    return d.trade_date
+            if exchange == 'SZSE':
+                for d in session.query(DailySZSE).filter_by(ts_code = stock_code).order_by(desc(DailySZSE.trade_date)).limit(1):
+                    return d.trade_date
 
         return None
 

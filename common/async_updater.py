@@ -15,11 +15,11 @@ class AsyncUpdater():
             try:
                 self.queue_lock.acquire()
 
-                date = self.queue.get_nowait() # will throw queue.Empty when self.queue is empty
+                [exchange, date] = self.queue.get_nowait() # will throw queue.Empty when self.queue is empty
                 self.queue.task_done()
 
-                # print("updater {0} got {1}".format(updater_id, date))
-                num_updated = self.td.update_daily(trade_date = str(date))
+                print("updater {0} got {1}:{2}".format(updater_id, exchange, date))
+                num_updated = self.td.update_daily(exchange, trade_date = str(date))
                 time.sleep(1)
                 self.num_of_stocks_updated_lock.acquire()
                 self.num_of_stocks_updated += num_updated
@@ -35,11 +35,11 @@ class AsyncUpdater():
             finally:
                 self.queue_lock.release()
 
-    def start_update(self, dates):
+    def start_update(self, exchange, dates):
         self.queue = queue.Queue()
 
         for date in dates:
-            self.queue.put(date)
+            self.queue.put((exchange, date))
 
         nparallel = self.num_updaters if self.num_updaters < self.queue.qsize() else self.queue.qsize()
         updaters = list()
@@ -52,9 +52,9 @@ class AsyncUpdater():
         for u in updaters:
             u.join()
 
-    def update_all_stocks_on_dates(self, dates):
+    def update_all_stocks_on_dates(self, exchange, dates):
         self.num_of_stocks_updated = 0
-        self.start_update(dates)
+        self.start_update(exchange, dates)
 
         return self.num_of_stocks_updated
 
