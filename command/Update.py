@@ -3,6 +3,7 @@ import common.helpers as helpers
 from common.constants import DECADES, EXCHANGES
 from common.async_updater import AsyncUpdater
 from data.TUData import TUData
+from data.local.Database import Database
 from datetime import datetime
 import time
 
@@ -70,10 +71,11 @@ class UpdateStock:
         if self.state == State.NULL:
             # stock_code is the last parameter -> update stock_code in complete history
             print("update stock {0}".format(stock_code))
-            td = TUData()
-            last_date = int(td.get_last_updated_date(stock_code)) + 1
+            db = Database()
+            last_date = int(db.get_last_updated_date(stock_code)) + 1
             today = int(datetime.today().strftime("%Y%m%d"))
             if last_date <= today:
+                td = TUData()
                 for decade in DECADES:
                     if last_date > decade['end']:
                         continue
