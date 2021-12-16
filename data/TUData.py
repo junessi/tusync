@@ -4,6 +4,7 @@ from sqlalchemy.pool import NullPool
 from sqlalchemy import create_engine, desc
 from common.constants import EXCHANGES
 from data.Daily import DailySSE, DailySZSE
+from data.Stock import StockSSE, StockSZSE
 from common.config import read_config
 import common.helpers as helpers
 import math
@@ -37,7 +38,7 @@ class TUData():
                                     poolclass = NullPool
                                     )
 
-        self.session_factory = sessionmaker(bind = self.engine)
+        self.session_factory = sessionmaker(bind = self.engine, autoflush = False)
 
     def get_db_session(self):
         return self.session_factory()
@@ -127,9 +128,9 @@ class TUData():
             print("save_dailies: caught exception: {0}".format(e))
             session.rollback()
         finally:
-            print("start commit")
+            # print("start commit")
             session.commit()
-        print("finished saving {0} stocks in to database".format(num_stocks))
+        # print("finished saving {0} stocks in to database".format(num_stocks))
 
         return num_stocks
 
@@ -149,6 +150,61 @@ class TUData():
                     return d.trade_date
 
         return None
+
+    def get_stock_list_of_exchange(self, exchange):
+        if exchange in EXCHANGES:
+            try:
+                fields = 'exchange,symbol,name,enname,fullname,list_date,delist_date'
+                result = self.pro.stock_basic(exchange = exchange, fields = fields)
+                stock_list = []
+                for i in range(0, len(result.symbol)):
+                    stock_list.append({'exchange': result.exchange[i],
+                                       'stock_code': result.symbol[i],
+                                       'name_cn': result.name[i],
+                                       'name_en': result.enname[i],
+                                       'fullname': result.fullname[i],
+                                       'list_date': result.list_date[i],
+                                       'delist_date': result.delist_date[i]})
+
+            except BaseException as e:
+                print("get_stock_list_of_exchange: exception caught: {0}".format(e))
+            finally:
+                self.save_stock_list_of_exchange(stock_list)
+        else:
+            print("get_stock_list_of_exchange: unknown exchange {0}".format(exchange))
+
+    def save_stock_list_of_exchange(self, stock_list):
+        session = self.get_db_session()
+        num_stocks = len(stock_list)
+
+        try:
+            for i in range(0, num_stocks):
+                exchange = stock_list[i]['exchange']
+                stock = None
+                if exchange == 'SSE':
+                    stock = StockSSE(stock_code    = stock_list[i]['stock_code'],
+                                     name_cn       = stock_list[i]['name_cn'],
+                                     name_en       = stock_list[i]['name_en'],
+                                     fullname      = stock_list[i]['fullname'],
+                                     list_date     = stock_list[i]['list_date'],
+                                     delist_date   = stock_list[i]['delist_date'])
+                elif exchange == 'SZSE':
+                    stock = StockSZSE(stock_code    = stock_list[i]['stock_code'],
+                                      name_cn       = stock_list[i]['name_cn'],
+                                      name_en       = stock_list[i]['name_en'],
+                                      fullname      = stock_list[i]['fullname'],
+                                      list_date     = stock_list[i]['list_date'],
+                                      delist_date   = stock_list[i]['delist_date'])
+                else:
+                    continue # unknow exchange, ignore this stock
+
+                # This merge() does not seem to be asynchronous between threads, fix it later.
+                session.merge(stock)
+        except Exception as e:
+            print("save_stock_list_of_exchange: caught exception: {0}".format(e))
+            session.rollback()
+        finally:
+            session.commit()
 
     def wait_for_available_call(self):
         try:

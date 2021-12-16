@@ -1,5 +1,5 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column,String,Float,Text
+from sqlalchemy import Column, String, Float
 
 Base = declarative_base()
 

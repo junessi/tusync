@@ -19,9 +19,9 @@ class AsyncUpdater():
                 self.queue.task_done()
                 self.queue_lock.release()
 
-                print("updater {0} got {2}.{1}".format(updater_id, exchange, date))
+                # print("updater {0} got {2}.{1}".format(updater_id, exchange, date))
                 num_updated = self.td.update_daily(exchange, trade_date = str(date))
-                print("updater {0} finished update_daily".format(updater_id))
+                # print("updater {0} finished update_daily".format(updater_id))
                 time.sleep(1)
                 self.num_of_stocks_updated_lock.acquire()
                 self.num_of_stocks_updated += num_updated

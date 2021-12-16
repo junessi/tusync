@@ -1,5 +1,6 @@
 from command.State import State
 from command.Update import Update
+from command.Fetch import Fetch
 import common.usages as usages
 
 class Command:
@@ -7,15 +8,17 @@ class Command:
         self.state = State.NULL
 
         cmd = params.next()
-        if cmd == 'update':
-            try:
+        try:
+            if cmd == 'update':
                 self.state = Update(params).get_state()
-            except BaseException as e:
-                print("Command: {}".format(e))
-                usages.printUpdateUsage()
-        else:
-            print("Command: Unknown command: '{0}'".format(cmd))
-            usages.printCommands()
+            elif cmd == 'fetch':
+                self.state = Fetch(params).get_state()
+            else:
+                print("Command: Unknown command: '{0}'".format(cmd))
+                usages.printCommands()
+        except BaseException as e:
+            print("Command: {}".format(e))
+            usages.printUpdateUsage()
 
     def state(self):
         return self.state
