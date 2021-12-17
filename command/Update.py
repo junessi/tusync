@@ -96,7 +96,8 @@ class UpdateExchange:
         if helpers.is_exchange(exchange):
             param = params.current()
             if helpers.is_date(param) == False:
-                # Exchange name is expected to be followed by a date, otherwise return with NULL state.
+                # Exchange name is expected to be followed by a date
+                self.state = State.INVALID_DATE
                 return
 
             self.state = UpdateFrom(params, exchange).get_state()

@@ -57,10 +57,11 @@ class TUData():
 
                 num_updated = self.database.save_dailies(result)
                 break
-            except Exception as e:
+            except BaseException as e:
+                print("update_daily(): Exception caught: {0}".format(e))
+                print("update_daily(): retries remaining: {0}".format(retries))
                 retries = retries - 1
-                print("update_daily(): {0}".format(e))
-                time.sleep(10)
+                time.sleep(60)
 
         if retries == 0:
             print("update_daily(exchange = '{0}', stock_code = '{1}', trade_date = '{2}', start_date = '{3}', end_date = '{4}') failed."
