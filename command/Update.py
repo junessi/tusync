@@ -39,7 +39,7 @@ class UpdateTo:
                 if int(from_date) > decade['end']:
                     continue
 
-                # print("update {0} in {1} from {2} ".format(s, e, from_date))
+                print("update {0} in {1} from {2} ".format(s, exchange, from_date))
                 td.update_daily(exchange, stock_code = s, start_date = from_date, end_date = to_date)
 
         return State.DONE
@@ -66,13 +66,17 @@ class UpdateStock:
     def __init__(self, params):
         self.state = State.NULL
 
-        stock_code = params.next()
-        self.state = UpdateFrom(params, stock_code).get_state()
+        # stock code format must be checked before this constructor has been called.
+        # example: 123456.XX
+        #   123456: stock code
+        #   XX: exchange subfix
+        [stock_code, exchange] = params.next().split('.')
+        self.state = UpdateFrom(params, exchange, stock_code).get_state()
         if self.state == State.NULL:
             # stock_code is the last parameter -> update stock_code in complete history
-            print("update stock {0}".format(stock_code))
+            print("update stock {0}.{1}".format(stock_code, exchange))
             db = Database()
-            last_date = int(db.get_last_updated_date(stock_code)) + 1
+            last_date = int(db.get_last_updated_date(exchange, stock_code)) + 1
             today = int(datetime.today().strftime("%Y%m%d"))
             if last_date <= today:
                 td = TUData()
@@ -82,7 +86,7 @@ class UpdateStock:
 
                     from_date = "{0}".format(last_date)
                     to_date = "{0}".format(today)
-                    td.update_daily(start_date = from_date, end_date = to_date)
+                    td.update_daily(exchange, stock_code, start_date = from_date, end_date = to_date)
 
     def get_state(self):
         return self.state

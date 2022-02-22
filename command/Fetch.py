@@ -6,7 +6,7 @@ from data.TUData import TUData
 
 class Exchange():
     def __init__(self, exchange):
-        self.exchange = exchange
+        self.exchange = helpers.get_exchange(exchange)
 
     def fetch(self):
         self.fetch_exchange_stock_list()
@@ -21,7 +21,7 @@ class Fetch:
         
         param = params.current()
         exchanges = []
-        if helpers.is_exchange(param):
+        if helpers.is_stock_code_subfix(param):
             exchanges.append(param)
         elif param == '':
             exchanges = EXCHANGES

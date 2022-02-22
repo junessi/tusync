@@ -36,21 +36,30 @@ class TUData():
 
         raise Exception("Invalid exchange code '{0}'".format(exchange))
 
-    def update_daily(self, exchange = '', stock_code = '', trade_date = '', start_date = '', end_date = ''):
-        retries = 10 # max retries
+    def update_daily(self, exchange, stock_code, trade_date = '', start_date = '', end_date = ''):
+        """
+            handling priority:
+                [exchange, stock_code, trade_date]:           update stock_code on trade_date in exchange
+                [exchange, stock_code, start_date, end_date]: update stock_code from start_date to end_date in exchange
+        """
+        max_retries = 10 # max retries
+        retry = 1
         num_updated = 0
-        while retries > 0:
+        while retry <= max_retries:
             try:
                 self.wait_for_available_call()
+                print("update_daily(exchange = '{0}', stock_code = '{1}', trade_date = '{2}', start_date = '{3}', end_date = '{4}')."
+                      .format(exchange, stock_code, trade_date, start_date, end_date))
 
                 fields = 'ts_code,trade_date,open,high,low,close,pre_close,change,pct_chg,vol,amount'
-                if trade_date:
-                    result = self.pro.daily(trade_date = trade_date, fields = fields)
-                else:
-                    if stock_code:
-                        stock_code = "{0}.{1}".format(stock_code, helpers.get_stock_code_ending(exchange))
+                ts_code = "{0}.{1}".format(stock_code, exchange)
 
-                    result = self.pro.daily(ts_code = stock_code,
+                if trade_date:
+                    result = self.pro.daily(ts_code = ts_code,
+                                            trade_date = trade_date,
+                                            fields = fields)
+                else:
+                    result = self.pro.daily(ts_code = ts_code,
                                             start_date = start_date,
                                             end_date = end_date,
                                             fields = fields)
@@ -59,13 +68,12 @@ class TUData():
                 break
             except BaseException as e:
                 print("update_daily(): Exception caught: {0}".format(e))
-                print("update_daily(): retries remaining: {0}".format(retries))
-                retries = retries - 1
+                print("update_daily(): retry: {0}".format(retry))
+                retry = retry + 1
                 time.sleep(60)
 
-        if retries == 0:
-            print("update_daily(exchange = '{0}', stock_code = '{1}', trade_date = '{2}', start_date = '{3}', end_date = '{4}') failed."
-                  .format(stock_code, trade_date, start_date, end_date))
+        if retry == max_retries:
+            print("update_daily() failed, max retries reached.")
 
         return num_updated
 

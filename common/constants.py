@@ -10,7 +10,14 @@ EXCHANGES = [
     'SZSE' # 深交所
 ]
 
-STOCK_CODE_ENDINGS = {
+STOCK_CODE_SUBFIX = ['SH', 'SZ']
+
+MAP_STOCK_CODE_SUBFIX_TO_EXCHANGE = {
+    'SH': 'SSE',
+    'SZ': 'SZSE'
+}
+
+MAP_EXCHANGE_TO_STOCK_CODE_SUBFIX = {
     'SSE': 'SH',
     'SZSE': 'SZ'
 }
