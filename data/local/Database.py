@@ -30,10 +30,10 @@ class Database:
     def get_last_updated_date(self, exchange, stock_code):
         with self.create_session() as session:
             if exchange == 'SH':
-                for d in session.query(DailySSE).filter_by(ts_code = stock_code).order_by(desc(DailySSE.trade_date)).limit(1):
+                for d in session.query(DailySSE).filter_by(stock_code = stock_code).order_by(desc(DailySSE.trade_date)).limit(1):
                     return d.trade_date
             elif exchange == 'SZ':
-                for d in session.query(DailySZSE).filter_by(ts_code = stock_code).order_by(desc(DailySZSE.trade_date)).limit(1):
+                for d in session.query(DailySZSE).filter_by(stock_code = stock_code).order_by(desc(DailySZSE.trade_date)).limit(1):
                     return d.trade_date
 
         return None

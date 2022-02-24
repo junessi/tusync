@@ -19,3 +19,6 @@ class Parameters:
             return next_token
 
         return ''
+
+    def add(self, param):
+        self.parameters.append(param)

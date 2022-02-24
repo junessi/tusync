@@ -12,8 +12,10 @@ class UpdateTo:
         self.state = State.NULL
         
         to_date = params.current()
-        if (len(to_date) == 0) or (helpers.is_date(to_date) == True):
-            # Note: even if to_date is an empty string, we can still pass it forward as if it is not set.
+        if len(to_date) == 0:
+            # no end date specified
+            pass
+        elif helpers.is_date(to_date) == True:
             self.state = self.update_to_date(exchange, stock_code, from_date, to_date)
         else:
             raise BaseException("Unknown from date: '{0}'".format(to_date))
@@ -23,23 +25,24 @@ class UpdateTo:
 
     def update_to_date(self, exchange, stock_code, from_date, to_date):
         td = TUData()
-        exchanges = EXCHANGES if exchange == '' else [exchange]
+        exchanges = EXCHANGES if exchange == '' else [helpers.get_exchange(exchange)]
         stock_codes = []
 
         if stock_code == '':
             for e in exchanges:
-                stock_codes = stock_codes + [c[:-3] for c in td.get_stock_list(e).ts_code]
-            print("update {0} stocks in exchange {1} from {2} ".format(len(stock_codes), e, from_date))
+                stock_codes = stock_codes + [c.split('.')[0] for c in td.get_stock_list(e).ts_code]
+            print("update {0} stocks in exchange {1} from {2} to {3}".format(len(stock_codes), e, from_date, to_date))
         else:
-            print("update {0} in exchange {1} from {2} ".format(stock_code, exchange, from_date))
+            print("update {0} in exchange {1} from {2} to {3}".format(stock_code, exchange, from_date, to_date))
             stock_codes.append(stock_code)
 
+        from_date = int(from_date)
         for s in stock_codes:
             for decade in DECADES:
-                if int(from_date) > decade['end']:
+                if from_date > decade['end']:
                     continue
 
-                print("update {0} in {1} from {2} ".format(s, exchange, from_date))
+                print("update {0} in {1} from {2} to {3}".format(s, exchange, from_date, to_date))
                 td.update_daily(exchange, stock_code = s, start_date = from_date, end_date = to_date)
 
         return State.DONE
@@ -49,17 +52,49 @@ class UpdateFrom:
     def __init__(self, params, exchange = '', stock_code = ''):
         self.state = State.NULL
         
-        from_date = params.next()
-        if len(from_date) == 0:
-            # no date specified -> update all
+        param = params.next()
+        if len(param) == 0:
             return
-        elif helpers.is_date(from_date):
-            self.state = UpdateTo(params, exchange, stock_code, from_date).get_state()
+        elif helpers.is_date(param):
+            self.state = UpdateTo(params, exchange, stock_code, param).get_state()
+            if self.state == State.NULL:
+                self.update_from_date(exchange, stock_code, param)
+                self.state = State.DONE
+        elif helpers.is_year(param):
+            params.add(helpers.get_last_date_of_year(param))
+            self.state = UpdateTo(params,
+                                  exchange,
+                                  stock_code,
+                                  helpers.get_first_date_of_year(param)).get_state()
         else:
-            raise BaseException("Unknown from date: '{0}'".format(from_date))
+            raise BaseException("UpdateFrom: invalid parameter '{0}'".format(param))
 
     def get_state(self):
         return self.state
+
+    def update_from_date(self, exchange, stock_code, from_date):
+        td = TUData()
+        exchanges = EXCHANGES if exchange == '' else [helpers.get_exchange(exchange)]
+        stock_codes = []
+
+        if stock_code == '':
+            for e in exchanges:
+                stock_codes = stock_codes + [c.split('.')[0] for c in td.get_stock_list(e).ts_code]
+            print("update {0} stocks in exchange {1} from {2}".format(len(stock_codes), e, from_date))
+        else:
+            print("update {0} in exchange {1} from {2}".format(stock_code, exchange, from_date))
+            stock_codes.append(stock_code)
+
+        from_date = int(from_date)
+        for s in stock_codes:
+            for decade in DECADES:
+                if from_date > decade['end']:
+                    continue
+
+                print("update {0} in {1} from {2}".format(s, exchange, from_date))
+                td.update_daily(exchange, stock_code = s, start_date = from_date)
+
+        return State.DONE
 
 
 class UpdateStock:
@@ -73,7 +108,7 @@ class UpdateStock:
         [stock_code, exchange] = params.next().split('.')
         self.state = UpdateFrom(params, exchange, stock_code).get_state()
         if self.state == State.NULL:
-            # stock_code is the last parameter -> update stock_code in complete history
+            # stock_code is the last parameter -> update stock_code from last updated date
             print("update stock {0}.{1}".format(stock_code, exchange))
             db = Database()
             last_date = int(db.get_last_updated_date(exchange, stock_code)) + 1
@@ -97,7 +132,7 @@ class UpdateExchange:
         self.state = State.NULL
 
         exchange = params.next()
-        if helpers.is_exchange(exchange):
+        if helpers.is_stock_code_subfix(exchange):
             param = params.current()
             if helpers.is_date(param) == False:
                 # Exchange name is expected to be followed by a date
@@ -141,10 +176,10 @@ class Update:
                 param == -2: today and yesterday
             """
             self.state = self.update_last_n_days(int(param[1:]))
-        elif helpers.is_exchange(param):
+        elif helpers.is_stock_code_subfix(param):
             self.state = UpdateExchange(params).get_state()
         else:
-            raise BaseException("Invalid input: '{0}'".format(param))
+            raise BaseException("Update: Invalid input '{0}'".format(param))
 
     def get_state(self):
         return self.state

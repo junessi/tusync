@@ -24,3 +24,9 @@ def is_stock_code_subfix(ex):
 
 def get_stock_code_subfix(ex):
     return MAP_EXCHANGE_TO_STOCK_CODE_SUBFIX[ex] if ex in EXCHANGES else ''
+
+def get_first_date_of_year(y):
+    return int(y) * 10000 + 101
+
+def get_last_date_of_year(y):
+    return int(y) * 10000 + 1231
