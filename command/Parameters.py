@@ -22,3 +22,6 @@ class Parameters:
 
     def add(self, param):
         self.parameters.append(param)
+
+    def size(self):
+        return len(self.parameters)
