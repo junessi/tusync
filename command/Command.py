@@ -29,5 +29,5 @@ class Command:
             print("Command: {}".format(e))
             usages.printUpdateUsage()
 
-    def state(self):
+    def get_state(self):
         return self.state

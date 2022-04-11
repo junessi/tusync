@@ -213,6 +213,7 @@ class Update:
                 n == 2: today and yesterday
                 ...
         """
+        td = TUData()
         today = datetime.today().strftime("%Y%m%d")
         date_from = "{0}".format(int(today) - (n - 1))
         date_to = "{0}".format(today)
@@ -223,9 +224,14 @@ class Update:
         td = TUData()
         start_time = time.time()
         open_dates = td.get_open_dates(exchange, date_from, date_to)
-        num_updated = self.update_exchange_on_dates(exchange, open_dates)
+
+        stock_codes = []
+        stock_codes = stock_codes + [c.split('.')[0] for c in td.get_stock_list(exchange).ts_code]
+        for stock_code in stock_codes:
+            td.update_daily(exchange, stock_code, start_date = date_from, end_date = date_to)
+        # num_updated = self.update_exchange_on_dates(exchange, open_dates)
         end_time = time.time()
-        print("updated {0} stocks in {1} from {2} to {3} took {4} second(s).".format(num_updated,
+        print("updated {0} stocks in {1} from {2} to {3} took {4} second(s).".format(len(stock_codes),
                                                                                      exchange,
                                                                                      date_from,
                                                                                      date_to,
