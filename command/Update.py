@@ -123,6 +123,8 @@ class UpdateStock:
                     to_date = "{0}".format(today)
                     td.update_daily(exchange, stock_code, start_date = from_date, end_date = to_date)
 
+            self.state = State.DONE
+
     def get_state(self):
         return self.state
 
@@ -194,6 +196,8 @@ class Update:
             for year in decade['years']:
                 self.update_all_in_year(year)
 
+        return State.DONE
+
     def update_all_in_year(self, year):
         today = datetime.today().strftime("%Y%m%d")
         date_from = "{0}0101".format(year)
@@ -213,23 +217,20 @@ class Update:
                 n == 2: today and yesterday
                 ...
         """
-        td = TUData()
         today = datetime.today().strftime("%Y%m%d")
         date_from = "{0}".format(int(today) - (n - 1))
         date_to = "{0}".format(today)
         for exchange in EXCHANGES:
             self.update_exchange_on_date_range(exchange, date_from, date_to)
 
+        return State.DONE
+
     def update_exchange_on_date_range(self, exchange, date_from, date_to):
         td = TUData()
         start_time = time.time()
-        open_dates = td.get_open_dates(exchange, date_from, date_to)
-
-        stock_codes = []
-        stock_codes = stock_codes + [c.split('.')[0] for c in td.get_stock_list(exchange).ts_code]
+        stock_codes = [c.split('.')[0] for c in td.get_stock_list(exchange).ts_code]
         for stock_code in stock_codes:
             td.update_daily(exchange, stock_code, start_date = date_from, end_date = date_to)
-        # num_updated = self.update_exchange_on_dates(exchange, open_dates)
         end_time = time.time()
         print("updated {0} stocks in {1} from {2} to {3} took {4} second(s).".format(len(stock_codes),
                                                                                      exchange,
