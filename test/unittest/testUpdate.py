@@ -114,16 +114,41 @@ class testUpdateFull(unittest.TestCase):
             assert self.updated_stocks[62] == ['100001.SSE', '20210101', '20211231']
             assert self.updated_stocks[63] == ['200001.SZSE', '20210101', '20211231']
 
-class testUpdateToday(unittest.TestCase):
+            today = int(datetime.today().strftime("%Y%m%d"))
+            start_date = "{0}".format(today - (today%10000) + 101) # form YYYY0101
+            end_date = "{0}".format(today)
+            assert self.updated_stocks[-1][0] == '200001.SZSE'
+            assert self.updated_stocks[-1][1] == start_date
+            assert self.updated_stocks[-1][2] == end_date
+
+
+class testUpdateLastNDays(unittest.TestCase):
     def update_last_n_days_mock(self, n):
-        assert n == 1
+        self.last_n = n
         return State.DONE
 
-    def test_update_today(self):
-        self.m_updated_stock_codes = list()
+    def test_update_last_n_days(self):
+        self.last_n = 0
         with patch.object(Update, 'update_last_n_days', new = self.update_last_n_days_mock):
             cmd = Command(Parameters(['update', 'today']))
             assert cmd.get_state() == State.DONE
+            assert self.last_n == 1
+
+            cmd = Command(Parameters(['update', '-1']))
+            assert cmd.get_state() == State.DONE
+            assert self.last_n == 1
+
+            cmd = Command(Parameters(['update', '-2']))
+            assert cmd.get_state() == State.DONE
+            assert self.last_n == 2
+
+            cmd = Command(Parameters(['update', '-5']))
+            assert cmd.get_state() == State.DONE
+            assert self.last_n == 5
+
+            cmd = Command(Parameters(['update', '-10000']))
+            assert cmd.get_state() == State.DONE
+            assert self.last_n == 10000
 
 
 class testUpdateStockCode(unittest.TestCase):
@@ -141,4 +166,17 @@ class testUpdateStockCode(unittest.TestCase):
             assert cmd.get_state() == State.DONE
             today = "{}".format(datetime.today().strftime("%Y%m%d"))
             assert self.updated_stocks == [['600699.SZ', '20200102', today]]
+
+
+class testUpdateStockCodeYear(unittest.TestCase):
+    def update_daily_mock(self, exchange, stock_code, trade_date = '', start_date = '', end_date = ''):
+        self.updated_stocks.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
+
+    def test_update_stock_code(self):
+        self.updated_stocks = list(list())
+        with patch.object(TUData, 'update_daily', new = self.update_daily_mock):
+            cmd = Command(Parameters(['update', '600699.SZ', '2011']))
+            assert cmd.get_state() == State.DONE
+            assert self.updated_stocks == [['600699.SZ', '20110101', '20111231']]
+
 

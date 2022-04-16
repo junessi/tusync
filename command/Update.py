@@ -12,7 +12,7 @@ class UpdateTo:
         self.state = State.NULL
         
         to_date = params.current()
-        if len(to_date) == 0:
+        if to_date == '':
             # no end date specified
             pass
         elif helpers.is_date(to_date) == True:
@@ -36,11 +36,13 @@ class UpdateTo:
             print("update {0} in exchange {1} from {2} to {3}".format(stock_code, exchange, from_date, to_date))
             stock_codes.append(stock_code)
 
-        from_date = int(from_date)
         for s in stock_codes:
             for decade in DECADES:
-                if from_date > decade['end']:
+                if int(from_date) > decade['end']:
                     continue
+
+                if int(to_date) < decade['start']:
+                    break
 
                 print("update {0} in {1} from {2} to {3}".format(s, exchange, from_date, to_date))
                 td.update_daily(exchange, stock_code = s, start_date = from_date, end_date = to_date)
@@ -61,11 +63,11 @@ class UpdateFrom:
                 self.update_from_date(exchange, stock_code, param)
                 self.state = State.DONE
         elif helpers.is_year(param):
-            params.add(helpers.get_last_date_of_year(param))
+            params.add(str(helpers.get_last_date_of_year(param)))
             self.state = UpdateTo(params,
                                   exchange,
                                   stock_code,
-                                  helpers.get_first_date_of_year(param)).get_state()
+                                  str(helpers.get_first_date_of_year(param))).get_state()
         else:
             raise BaseException("UpdateFrom: invalid parameter '{0}'".format(param))
 
@@ -207,7 +209,9 @@ class Update:
         if int(date_to) > int(today):
             date_to = today
         for exchange in EXCHANGES:
-            self.update_exchange_on_date_range(exchange, date_from, date_to)
+            self.update_exchange_in_date_range(exchange, date_from, date_to)
+
+        return State.DONE
 
     def update_last_n_days(self, n):
         """
@@ -221,11 +225,11 @@ class Update:
         date_from = "{0}".format(int(today) - (n - 1))
         date_to = "{0}".format(today)
         for exchange in EXCHANGES:
-            self.update_exchange_on_date_range(exchange, date_from, date_to)
+            self.update_exchange_in_date_range(exchange, date_from, date_to)
 
         return State.DONE
 
-    def update_exchange_on_date_range(self, exchange, date_from, date_to):
+    def update_exchange_in_date_range(self, exchange, date_from, date_to):
         td = TUData()
         start_time = time.time()
         stock_codes = [c.split('.')[0] for c in td.get_stock_list(exchange).ts_code]
