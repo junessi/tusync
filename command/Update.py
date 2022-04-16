@@ -30,13 +30,14 @@ class UpdateTo:
 
         if stock_code == '':
             for e in exchanges:
-                stock_codes = stock_codes + [c.split('.')[0] for c in td.get_stock_list(e).ts_code]
-            print("update {0} stocks in exchange {1} from {2} to {3}".format(len(stock_codes), e, from_date, to_date))
+                for c in td.get_stock_list(e).ts_code:
+                    stock_codes.append(c.split('.'))
+                    print("update {0} stocks in exchange {1} from {2} to {3}".format(len(stock_codes), e, from_date, to_date))
         else:
             print("update {0} in exchange {1} from {2} to {3}".format(stock_code, exchange, from_date, to_date))
-            stock_codes.append(stock_code)
+            stock_codes.append([stock_code, exchange])
 
-        for s in stock_codes:
+        for c, e in stock_codes:
             for decade in DECADES:
                 if int(from_date) > decade['end']:
                     continue
@@ -44,8 +45,8 @@ class UpdateTo:
                 if int(to_date) < decade['start']:
                     break
 
-                print("update {0} in {1} from {2} to {3}".format(s, exchange, from_date, to_date))
-                td.update_daily(exchange, stock_code = s, start_date = from_date, end_date = to_date)
+                td.update_daily(e, stock_code = c, start_date = from_date, end_date = to_date)
+                print("updated {0} in exchange {1} from {2} to {3}".format(c, e, from_date, to_date))
 
         return State.DONE
 
@@ -55,7 +56,7 @@ class UpdateFrom:
         self.state = State.NULL
         
         param = params.next()
-        if len(param) == 0:
+        if param == '':
             return
         elif helpers.is_date(param):
             self.state = UpdateTo(params, exchange, stock_code, param).get_state()
@@ -87,14 +88,13 @@ class UpdateFrom:
             print("update {0} in exchange {1} from {2}".format(stock_code, exchange, from_date))
             stock_codes.append(stock_code)
 
-        from_date = int(from_date)
         for s in stock_codes:
             for decade in DECADES:
-                if from_date > decade['end']:
+                if int(from_date) > decade['end']:
                     continue
 
-                print("update {0} in {1} from {2}".format(s, exchange, from_date))
                 td.update_daily(exchange, stock_code = s, start_date = from_date)
+                print("updated {0} in exchange {1} from {2}".format(s, exchange, from_date))
 
         return State.DONE
 
@@ -151,8 +151,8 @@ class UpdateExchange:
                 for decade in DECADES:
                     from_date = "{0}".format(decade['start'])
                     to_date = "{0}".format(decade['end'])
-                    print("update exchange {0} from {1} to {2}".format(exchange, from_date, to_date))
                     td.update_daily(exchange, start_date = from_date, end_date = to_date)
+                    print("updated exchange {0} from {1} to {2}".format(exchange, from_date, to_date))
 
     def get_state(self):
         return self.state
@@ -171,7 +171,7 @@ class Update:
             self.state = self.update_all_in_year(param)
         elif param == 'full':
             self.state = self.update_full()
-        elif param == 'today' or len(param) == 0:
+        elif param == 'today' or param == '':
             self.state = self.update_last_n_days(1)
         elif helpers.is_negative_number(param):
             """

@@ -30,6 +30,7 @@ class testUpdate(unittest.TestCase):
             assert cmd.get_state() == State.DONE
             assert self.m_updated_stock_codes == ['100001.SSE', '100002.SSE', '100003.SSE', '200001.SZSE', '200002.SZSE', '200003.SZSE']
 
+
 class testUpdateFull(unittest.TestCase):
     def update_daily_mock(self, exchange, stock_code, trade_date = '', start_date = '', end_date = ''):
         self.updated_stocks.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
@@ -179,4 +180,141 @@ class testUpdateStockCodeYear(unittest.TestCase):
             assert cmd.get_state() == State.DONE
             assert self.updated_stocks == [['600699.SZ', '20110101', '20111231']]
 
+
+class testUpdateStockCodeFromDate(unittest.TestCase):
+    def update_daily_mock(self, exchange, stock_code, trade_date = '', start_date = '', end_date = ''):
+        self.updated_stocks.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
+
+    def test_update_stock_code_from_date(self):
+        self.updated_stocks = list(list())
+        with patch.object(TUData, 'update_daily', new = self.update_daily_mock):
+            cmd = Command(Parameters(['update', '600688.SZ', '20200621']))
+            assert cmd.get_state() == State.DONE
+            assert self.updated_stocks == [['600688.SZ', '20200621', '']]
+
+
+class testUpdateStockCodeFromToDate(unittest.TestCase):
+    def update_daily_mock(self, exchange, stock_code, trade_date = '', start_date = '', end_date = ''):
+        self.updated_stocks.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
+
+    def test_update_stock_code_from_to_date(self):
+        with patch.object(TUData, 'update_daily', new = self.update_daily_mock):
+            self.updated_stocks = list(list())
+            cmd = Command(Parameters(['update', '600688.SZ', '20200621', '20200920']))
+            assert cmd.get_state() == State.DONE
+            assert self.updated_stocks == [['600688.SZ', '20200621', '20200920']]
+
+            self.updated_stocks = list(list())
+            cmd = Command(Parameters(['update', '600688.SZ', '20200621', '20220920']))
+            assert cmd.get_state() == State.DONE
+            assert self.updated_stocks == [['600688.SZ', '20200621', '20220920']]
+
+
+class testUpdateExchangeFromDate(unittest.TestCase):
+    def update_daily_mock(self, exchange, stock_code, trade_date = '', start_date = '', end_date = ''):
+        self.updated_stocks.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
+
+    def get_stock_list_mock(self, exchange):
+        data = type('', (object, ), {'ts_code': list()})() # anonymous object
+        if exchange == "SSE":
+            data.ts_code = ["300001.SH", "300002.SH", "300003.SH"]
+        elif exchange == "SZSE":
+            data.ts_code = ["300004.SZ", "300005.SZ", "300006.SZ"]
+
+        return data
+
+    def test_update_exchange_from_date(self):
+        with patch.object(TUData, 'update_daily', new = self.update_daily_mock), \
+             patch.object(TUData, 'get_stock_list', new = self.get_stock_list_mock):
+
+            self.updated_stocks = list(list())
+            cmd = Command(Parameters(['update', 'SH', '20200301']))
+            assert cmd.get_state() == State.DONE
+            assert self.updated_stocks == [['300001.SH', '20200301', ''], ['300002.SH', '20200301', ''], ['300003.SH', '20200301', '']]
+
+            self.updated_stocks = list(list())
+            cmd = Command(Parameters(['update', 'SZ', '20200301']))
+            assert cmd.get_state() == State.DONE
+            assert self.updated_stocks == [['300004.SZ', '20200301', ''], ['300005.SZ', '20200301', ''], ['300006.SZ', '20200301', '']]
+
+
+class testUpdateExchangeFromToDate(unittest.TestCase):
+    def update_daily_mock(self, exchange, stock_code, trade_date = '', start_date = '', end_date = ''):
+        self.updated_stocks.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
+
+    def get_stock_list_mock(self, exchange):
+        data = type('', (object, ), {'ts_code': list()})() # anonymous object
+        if exchange == "SSE":
+            data.ts_code = ["300001.SH", "300002.SH", "300003.SH"]
+        elif exchange == "SZSE":
+            data.ts_code = ["300004.SZ", "300005.SZ", "300006.SZ"]
+
+        return data
+
+    def test_update_exchange_from_date(self):
+        with patch.object(TUData, 'update_daily', new = self.update_daily_mock), \
+             patch.object(TUData, 'get_stock_list', new = self.get_stock_list_mock):
+
+            self.updated_stocks = list(list())
+            cmd = Command(Parameters(['update', 'SH', '20200301', '20221130']))
+            assert cmd.get_state() == State.DONE
+            assert self.updated_stocks == [['300001.SH', '20200301', '20221130'],
+                                           ['300002.SH', '20200301', '20221130'],
+                                           ['300003.SH', '20200301', '20221130']]
+
+            self.updated_stocks = list(list())
+            cmd = Command(Parameters(['update', 'SZ', '20200301', '20221031']))
+            assert cmd.get_state() == State.DONE
+            assert self.updated_stocks == [['300004.SZ', '20200301', '20221031'],
+                                           ['300005.SZ', '20200301', '20221031'],
+                                           ['300006.SZ', '20200301', '20221031']]
+
+
+class testUpdateFromToDate(unittest.TestCase):
+    def update_daily_mock(self, exchange, stock_code, trade_date = '', start_date = '', end_date = ''):
+        self.updated_stocks.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
+
+    def get_stock_list_mock(self, exchange):
+        data = type('', (object, ), {'ts_code': list()})() # anonymous object
+        if exchange == "SSE":
+            data.ts_code = ["400001.SH", "400002.SH", "400003.SH"]
+        elif exchange == "SZSE":
+            data.ts_code = ["400004.SZ", "400005.SZ", "400006.SZ"]
+
+        return data
+
+    def test_update_exchange_from_date(self):
+        with patch.object(TUData, 'update_daily', new = self.update_daily_mock), \
+             patch.object(TUData, 'get_stock_list', new = self.get_stock_list_mock):
+
+            self.updated_stocks = list(list())
+            cmd = Command(Parameters(['update', '20200201', '20221031']))
+            assert cmd.get_state() == State.DONE
+            assert self.updated_stocks == [['400001.SH', '20200201', '20221031'],
+                                           ['400002.SH', '20200201', '20221031'],
+                                           ['400003.SH', '20200201', '20221031'],
+                                           ['400004.SZ', '20200201', '20221031'],
+                                           ['400005.SZ', '20200201', '20221031'],
+                                           ['400006.SZ', '20200201', '20221031']]
+
+class testFetch(unittest.TestCase):
+    def get_stock_list_of_exchange_mock(self, exchange):
+        if exchange == "SSE":
+            self.stock_list = ["500001.SH", "500002.SH", "500003.SH"]
+        elif exchange == "SZSE":
+            self.stock_list = ["500004.SZ", "500005.SZ", "500006.SZ"]
+
+    def test_fetch(self):
+        with patch.object(TUData, 'get_stock_list_of_exchange', new = self.get_stock_list_of_exchange_mock):
+
+            self.stock_list = list(list())
+            cmd = Command(Parameters(['fetch', 'SH']))
+            assert cmd.get_state() == State.DONE
+            print(self.stock_list)
+            assert self.stock_list == ["500001.SH", "500002.SH", "500003.SH"]
+
+            self.stock_list = list(list())
+            cmd = Command(Parameters(['fetch', 'SZ']))
+            assert cmd.get_state() == State.DONE
+            assert self.stock_list == ["500004.SZ", "500005.SZ", "500006.SZ"]
 
