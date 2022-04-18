@@ -14,10 +14,10 @@ mysql_charset=<db charset>   # for example: utf8mb4
 
 ## Supported exchanges
 
-| exchange | code |
-| ------------- | ------------- |
-| Shanghai Stock Exchange | SH |
-| Shenzhen Stock Exchange | SZ |
+| exchange                  | code          |
+| ------------------------- | ------------- |
+| Shanghai Stock Exchange   | SH            |
+| Shenzhen Stock Exchange   | SZ            |
 
 ## Commands
 ### fetch
