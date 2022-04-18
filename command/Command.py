@@ -6,9 +6,15 @@ import common.usages as usages
 def printState(state):
     if state == State.INVALID_DATE:
         print('Invalid date given. Valid form should be YYYYMMDD.')
-    elif state == State.UNKNOWN_COMMAND:
+    elif state == State.NEED_HELP:
+        usages.printHelp()
+    elif state == State.NEED_HELP_FOR_COMMAND:
         print('Unknown command.')
         usages.printCommands()
+    elif state == State.NEED_HELP_FOR_UPDATE:
+        usages.printUpdateUsage()
+    elif state == State.NEED_HELP_FOR_FETCH:
+        usages.printFetchUsage()
 
 class Command:
     def __init__(self, params):
@@ -17,17 +23,25 @@ class Command:
         cmd = params.next()
         try:
             if cmd == 'update':
-                self.state = Update(params).get_state()
+                if params.current() == 'help':
+                    self.state = State.NEED_HELP_FOR_UPDATE
+                else:
+                    self.state = Update(params).get_state()
             elif cmd == 'fetch':
-                self.state = Fetch(params).get_state()
+                if params.current() == 'help':
+                    self.state = State.NEED_HELP_FOR_FETCH
+                else:
+                    self.state = Fetch(params).get_state()
+            elif cmd == 'help':
+                self.state = State.NEED_HELP
             else:
-                self.state = State.UNKNOWN_COMMAND
-
-            printState(self.state)
+                self.state = State.NEED_HELP_FOR_COMMAND
 
         except BaseException as e:
-            print("Command: {}".format(e))
-            usages.printUpdateUsage()
+            print("Command failed: {}".format(e))
+            self.state = State.NEED_HELP
+        finally:
+            printState(self.state)
 
     def get_state(self):
         return self.state
