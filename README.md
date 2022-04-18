@@ -1,5 +1,5 @@
 # tusync
-A tool for fetching and storing tushare data to local database.
+A tool for fetching and pulling tushare data to local database.
 
 ## Credentials
 Create or edit ~/.tusync_credentials to have the following content:
