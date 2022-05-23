@@ -9,7 +9,7 @@ import tushare
 
 class TUData():
 
-    # limit: 500 call/min
+    # limit: 500 calls/min
     calls = 500
     seconds = 60
 
@@ -129,7 +129,7 @@ class TUData():
                 if TUData.call_timestamps.full() == False:
                     break
 
-                time.sleep(1)
+                time.sleep(2) # queue is still full, take a short break before next check.
 
             t = int(time.time())
             TUData.call_timestamps.put(t)

@@ -1,11 +1,11 @@
-from command.State import State
 import common.helpers as helpers
+import time
+from command.State import State
 from common.constants import DECADES, EXCHANGES
-from common.async_updater import AsyncUpdater
+from common.AsyncTaskExecutor import AsyncTaskExecutor, Task
 from data.TUData import TUData
 from data.local.Database import Database
 from datetime import datetime
-import time
 
 class UpdateTo:
     def __init__(self, params, exchange, stock_code, from_date):
@@ -37,6 +37,9 @@ class UpdateTo:
             print("update {0} in exchange {1} from {2} to {3}".format(stock_code, exchange, from_date, to_date))
             stock_codes.append([stock_code, exchange])
 
+        a = AsyncTaskExecutor(64)
+
+        start_time = time.now()
         for c, e in stock_codes:
             for decade in DECADES:
                 if int(from_date) > decade['end']:
@@ -45,8 +48,14 @@ class UpdateTo:
                 if int(to_date) < decade['start']:
                     break
 
-                td.update_daily(e, stock_code = c, start_date = from_date, end_date = to_date)
-                print("updated {0} in exchange {1} from {2} to {3}".format(c, e, from_date, to_date))
+                a.push(Task(td.update_daily, e, c, '', from_date, to_date))
+
+        a.execute()
+        end_time = time.now()
+        print("updated {0} stocks in {1} from {2} took {3} second(s).".format(len(stock_codes),
+                                                                                  exchange,
+                                                                                  from_date,
+                                                                                  end_time - start_time))
 
         return State.DONE
 
@@ -77,6 +86,9 @@ class UpdateFrom:
 
     def update_from_date(self, exchange, stock_code, from_date):
         td = TUData()
+        a = AsyncTaskExecutor(64)
+
+        start_time = time.time()
         exchanges = EXCHANGES if exchange == '' else [helpers.get_exchange(exchange)]
         stock_codes = []
 
@@ -93,8 +105,15 @@ class UpdateFrom:
                 if int(from_date) > decade['end']:
                     continue
 
-                td.update_daily(exchange, stock_code = s, start_date = from_date)
-                print("updated {0} in exchange {1} from {2}".format(s, exchange, from_date))
+                a.push(Task(td.update_daily, exchange, s, '', from_date, ''))
+
+        a.execute()
+        end_time = time.time()
+
+        print("updated {0} stocks in {1} from {2} took {3} second(s).".format(len(stock_codes),
+                                                                                  exchange,
+                                                                                  from_date,
+                                                                                  end_time - start_time))
 
         return State.DONE
 
@@ -111,19 +130,28 @@ class UpdateStock:
         self.state = UpdateFrom(params, exchange, stock_code).get_state()
         if self.state == State.NULL:
             # stock_code is the last parameter -> update stock_code from last updated date
-            print("update stock {0}.{1}".format(stock_code, exchange))
+            # print("update stock {0}.{1}".format(stock_code, exchange))
             db = Database()
             last_date = int(db.get_last_updated_date(exchange, stock_code)) + 1
             today = int(datetime.today().strftime("%Y%m%d"))
             if last_date <= today:
                 td = TUData()
+                a = AsyncTaskExecutor(64)
+
+                start_time = time.now()
                 for decade in DECADES:
                     if last_date > decade['end']:
                         continue
 
                     from_date = "{0}".format(last_date)
                     to_date = "{0}".format(today)
-                    td.update_daily(exchange, stock_code, start_date = from_date, end_date = to_date)
+                    a.push(Task(td.update_daily, exchange, stock_code, '', from_date, to_date))
+
+                a.execute()
+                end_time = time.now()
+                print("updated 1 stock in exchange {0} from {1} took {2} second(s)".format(exchange,
+                                                                                           last_date + 1,
+                                                                                           end_time - start_time))
 
             self.state = State.DONE
 
@@ -138,21 +166,28 @@ class UpdateExchange:
         exchange = params.next()
         if helpers.is_stock_code_subfix(exchange):
             param = params.current()
-            if helpers.is_date(param) == False:
+            if helpers.is_date(param):
+                self.state = UpdateFrom(params, exchange).get_state()
+
+            elif len(param) == 0:
+                stock_codes = [c.split('.')[0] for c in td.get_stock_list(exchange).ts_code]
+                td = TUData()
+                a = AsyncTaskExecutor(64)
+
+                start_time = time.now()
+                for stock_code in stock_codes:
+                    for decade in DECADES:
+                        from_date = "{0}".format(decade['start'])
+                        to_date = "{0}".format(decade['end'])
+                        a.push(Task(td.update_daily, exchange, stock_code, '', from_date, to_date))
+                end_time = time.now()
+                print("updated {0} stocks in exchange {1} since opening took {2} second(s)".format(len(stock_codes),
+                                                                                                   exchange,
+                                                                                                   end_time - start_time))
+
+            else:
                 # Exchange name is expected to be followed by a date
                 self.state = State.INVALID_DATE
-                return
-
-            self.state = UpdateFrom(params, exchange).get_state()
-
-            if self.state == State.NULL:
-                print("update exchange {0}".format(exchange))
-                td = TUData()
-                for decade in DECADES:
-                    from_date = "{0}".format(decade['start'])
-                    to_date = "{0}".format(decade['end'])
-                    td.update_daily(exchange, start_date = from_date, end_date = to_date)
-                    print("updated exchange {0} from {1} to {2}".format(exchange, from_date, to_date))
 
     def get_state(self):
         return self.state
@@ -233,19 +268,16 @@ class Update:
         td = TUData()
         start_time = time.time()
         stock_codes = [c.split('.')[0] for c in td.get_stock_list(exchange).ts_code]
+        
+        # Use AsyncTaskExecutor to call a bulk of update_daily()
+        a = AsyncTaskExecutor(64)
         for stock_code in stock_codes:
-            td.update_daily(exchange, stock_code, start_date = date_from, end_date = date_to)
+            # td.update_daily(exchange, stock_code, start_date = date_from, end_date = date_to)
+            a.push(Task(td.update_daily, exchange, stock_code, '', date_from, date_to))
+        a.execute()
         end_time = time.time()
         print("updated {0} stocks in {1} from {2} to {3} took {4} second(s).".format(len(stock_codes),
                                                                                      exchange,
                                                                                      date_from,
                                                                                      date_to,
                                                                                      end_time - start_time))
-
-    def update_exchange_on_dates(self, exchange, dates):
-        u = AsyncUpdater()
-        num_updated = u.update_all_stocks_on_dates(exchange, dates)
-
-        return num_updated
-
-
