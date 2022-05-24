@@ -6,3 +6,4 @@ jobs:
     steps:
       - checkout
       - run: pip install -r requirements.txt
+      - run: python -m unittest discover -s test/unittest/ -p "test*.py"
