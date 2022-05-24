@@ -1,7 +1,6 @@
 from common.config import read_config
 from common.constants import EXCHANGES
 from data.local.Database import Database
-import common.helpers as helpers
 import queue
 import threading
 import time

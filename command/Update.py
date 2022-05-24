@@ -39,7 +39,7 @@ class UpdateTo:
 
         a = AsyncTaskExecutor(64)
 
-        start_time = time.now()
+        start_time = time.time()
         for c, e in stock_codes:
             for decade in DECADES:
                 if int(from_date) > decade['end']:
@@ -51,7 +51,7 @@ class UpdateTo:
                 a.push(Task(td.update_daily, e, c, '', from_date, to_date))
 
         a.execute()
-        end_time = time.now()
+        end_time = time.time()
         print("updated {0} stocks in {1} from {2} took {3} second(s).".format(len(stock_codes),
                                                                                   exchange,
                                                                                   from_date,
@@ -138,7 +138,7 @@ class UpdateStock:
                 td = TUData()
                 a = AsyncTaskExecutor(64)
 
-                start_time = time.now()
+                start_time = time.time()
                 for decade in DECADES:
                     if last_date > decade['end']:
                         continue
@@ -148,7 +148,7 @@ class UpdateStock:
                     a.push(Task(td.update_daily, exchange, stock_code, '', from_date, to_date))
 
                 a.execute()
-                end_time = time.now()
+                end_time = time.time()
                 print("updated 1 stock in exchange {0} from {1} took {2} second(s)".format(exchange,
                                                                                            last_date + 1,
                                                                                            end_time - start_time))
@@ -174,13 +174,13 @@ class UpdateExchange:
                 td = TUData()
                 a = AsyncTaskExecutor(64)
 
-                start_time = time.now()
+                start_time = time.time()
                 for stock_code in stock_codes:
                     for decade in DECADES:
                         from_date = "{0}".format(decade['start'])
                         to_date = "{0}".format(decade['end'])
                         a.push(Task(td.update_daily, exchange, stock_code, '', from_date, to_date))
-                end_time = time.now()
+                end_time = time.time()
                 print("updated {0} stocks in exchange {1} since opening took {2} second(s)".format(len(stock_codes),
                                                                                                    exchange,
                                                                                                    end_time - start_time))
