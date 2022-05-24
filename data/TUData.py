@@ -16,6 +16,7 @@ class TUData():
     call_ts_lock = threading.Lock()
 
     def __init__(self):
+        print("-------------> init TUData")
         config = read_config()
         self.pro = tushare.pro_api(config["token"])
         self.database = Database()

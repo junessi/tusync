@@ -13,6 +13,9 @@ class testUpdate(unittest.TestCase):
     def setUp(self):
         self.updated_stock_codes = list()
 
+    def init_TUData(self):
+        pass
+
     def update_daily_mock(self, exchange, stock_code, trade_date = '', start_date = '', end_date = ''):
         self.updated_stock_codes.append("{0}.{1}".format(stock_code, exchange))
 
@@ -26,7 +29,8 @@ class testUpdate(unittest.TestCase):
         return data
 
     def test_update(self):
-        with patch.object(TUData, 'update_daily', new = self.update_daily_mock), \
+        with patch.object(TUData, '__init__', new = self.init_TUData), \
+             patch.object(TUData, 'update_daily', new = self.update_daily_mock), \
              patch.object(TUData, 'get_stock_list', new = self.get_stock_list_mock):
             cmd = Command(Parameters(['update']))
             self.assertEqual(cmd.get_state(), State.DONE)
@@ -35,6 +39,9 @@ class testUpdate(unittest.TestCase):
 
 
 class testUpdateFull(unittest.TestCase):
+    def init_TUData(self):
+        pass
+
     def update_daily_mock(self, exchange, stock_code, trade_date = '', start_date = '', end_date = ''):
         self.updated_stocks.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
 
@@ -49,7 +56,8 @@ class testUpdateFull(unittest.TestCase):
 
     def test_update_full(self):
         self.updated_stocks = list(list())
-        with patch.object(TUData, 'update_daily', new = self.update_daily_mock), \
+        with patch.object(TUData, '__init__', new = self.init_TUData), \
+             patch.object(TUData, 'update_daily', new = self.update_daily_mock), \
              patch.object(TUData, 'get_stock_list', new = self.get_stock_list_mock):
             cmd = Command(Parameters(['update', 'full']))
             self.assertEqual(cmd.get_state(), State.DONE)
@@ -127,13 +135,17 @@ class testUpdateFull(unittest.TestCase):
 
 
 class testUpdateLastNDays(unittest.TestCase):
+    def init_TUData(self):
+        pass
+
     def update_last_n_days_mock(self, n):
         self.last_n = n
         return State.DONE
 
     def test_update_last_n_days(self):
         self.last_n = 0
-        with patch.object(Update, 'update_last_n_days', new = self.update_last_n_days_mock):
+        with patch.object(TUData, '__init__', new = self.init_TUData), \
+             patch.object(Update, 'update_last_n_days', new = self.update_last_n_days_mock):
             cmd = Command(Parameters(['update', 'today']))
             self.assertEqual(cmd.get_state(), State.DONE)
             self.assertEqual(self.last_n, 1)
@@ -154,10 +166,15 @@ class testUpdateLastNDays(unittest.TestCase):
             self.assertEqual(cmd.get_state(), State.DONE)
             self.assertEqual(self.last_n, 10000)
 
-
 class testUpdateStockCode(unittest.TestCase):
     def setUp(self):
         self.updated_stocks = list(list())
+
+    def init_TUData(self):
+        pass
+
+    def init_Database(self):
+        pass
 
     def update_daily_mock(self, exchange, stock_code, trade_date = '', start_date = '', end_date = ''):
         self.updated_stocks.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
@@ -166,7 +183,9 @@ class testUpdateStockCode(unittest.TestCase):
         return 20200101
 
     def test_update_stock_code(self):
-        with patch.object(TUData, 'update_daily', new = self.update_daily_mock), \
+        with patch.object(TUData, '__init__', new = self.init_TUData), \
+             patch.object(TUData, 'update_daily', new = self.update_daily_mock), \
+             patch.object(Database, '__init__', new = self.init_Database), \
              patch.object(Database, 'get_last_updated_date', new = self.get_last_updated_date_mock):
             cmd = Command(Parameters(['update', '600699.SZ']))
             self.assertEqual(cmd.get_state(), State.DONE)
@@ -178,23 +197,31 @@ class testUpdateStockCodeYear(unittest.TestCase):
     def setUp(self):
         self.updated_stocks = list(list())
 
+    def init_TUData(self):
+        pass
+
     def update_daily_mock(self, exchange, stock_code, trade_date = '', start_date = '', end_date = ''):
         self.updated_stocks.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
 
     def test_update_stock_code(self):
-        with patch.object(TUData, 'update_daily', new = self.update_daily_mock):
+        with patch.object(TUData, '__init__', new = self.init_TUData), \
+             patch.object(TUData, 'update_daily', new = self.update_daily_mock):
             cmd = Command(Parameters(['update', '600699.SZ', '2011']))
             self.assertEqual(cmd.get_state(), State.DONE)
             self.assertEqual(self.updated_stocks, [['600699.SZ', '20110101', '20111231']])
 
 
 class testUpdateStockCodeFromDate(unittest.TestCase):
+    def init_TUData(self):
+        pass
+
     def update_daily_mock(self, exchange, stock_code, trade_date = '', start_date = '', end_date = ''):
         self.updated_stocks.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
 
     def test_update_stock_code_from_date(self):
         self.updated_stocks = list(list())
-        with patch.object(TUData, 'update_daily', new = self.update_daily_mock):
+        with patch.object(TUData, '__init__', new = self.init_TUData), \
+             patch.object(TUData, 'update_daily', new = self.update_daily_mock):
             cmd = Command(Parameters(['update', '600688.SZ', '20200621']))
             self.assertEqual(cmd.get_state(), State.DONE)
             self.assertEqual(self.updated_stocks, [['600688.SZ', '20200621', '']])
@@ -204,11 +231,15 @@ class testUpdateStockCodeFromToDate(unittest.TestCase):
     def setUp(self):
         self.updated_stocks = list(list())
 
+    def init_TUData(self):
+        pass
+
     def update_daily_mock(self, exchange, stock_code, trade_date = '', start_date = '', end_date = ''):
         self.updated_stocks.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
 
     def test_update_stock_code_from_to_date(self):
-        with patch.object(TUData, 'update_daily', new = self.update_daily_mock):
+        with patch.object(TUData, '__init__', new = self.init_TUData), \
+             patch.object(TUData, 'update_daily', new = self.update_daily_mock):
             cmd = Command(Parameters(['update', '600688.SZ', '20200621', '20200920']))
             self.assertEqual(cmd.get_state(), State.DONE)
             self.assertEqual(self.updated_stocks, [['600688.SZ', '20200621', '20200920']])
@@ -223,6 +254,9 @@ class testUpdateExchangeFromDate(unittest.TestCase):
     def setUp(self):
         self.updated_stocks = list(list())
 
+    def init_TUData(self):
+        pass
+
     def update_daily_mock(self, exchange, stock_code, trade_date = '', start_date = '', end_date = ''):
         self.updated_stocks.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
 
@@ -236,7 +270,8 @@ class testUpdateExchangeFromDate(unittest.TestCase):
         return data
 
     def test_update_exchange_from_date(self):
-        with patch.object(TUData, 'update_daily', new = self.update_daily_mock), \
+        with patch.object(TUData, '__init__', new = self.init_TUData), \
+             patch.object(TUData, 'update_daily', new = self.update_daily_mock), \
              patch.object(TUData, 'get_stock_list', new = self.get_stock_list_mock):
 
             cmd = Command(Parameters(['update', 'SH', '20200301']))
@@ -253,6 +288,9 @@ class testUpdateExchangeFromToDate(unittest.TestCase):
     def setUp(self):
         self.updated_stocks = list(list())
 
+    def init_TUData(self):
+        pass
+
     def update_daily_mock(self, exchange, stock_code, trade_date = '', start_date = '', end_date = ''):
         self.updated_stocks.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
 
@@ -266,7 +304,8 @@ class testUpdateExchangeFromToDate(unittest.TestCase):
         return data
 
     def test_update_exchange_from_date(self):
-        with patch.object(TUData, 'update_daily', new = self.update_daily_mock), \
+        with patch.object(TUData, '__init__', new = self.init_TUData), \
+             patch.object(TUData, 'update_daily', new = self.update_daily_mock), \
              patch.object(TUData, 'get_stock_list', new = self.get_stock_list_mock):
 
             cmd = Command(Parameters(['update', 'SH', '20200301', '20221130']))
@@ -287,6 +326,9 @@ class testUpdateFromToDate(unittest.TestCase):
     def setUp(self):
         self.updated_stocks = list(list())
 
+    def init_TUData(self):
+        pass
+
     def update_daily_mock(self, exchange, stock_code, trade_date = '', start_date = '', end_date = ''):
         self.updated_stocks.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
 
@@ -300,7 +342,8 @@ class testUpdateFromToDate(unittest.TestCase):
         return data
 
     def test_update_exchange_from_date(self):
-        with patch.object(TUData, 'update_daily', new = self.update_daily_mock), \
+        with patch.object(TUData, '__init__', new = self.init_TUData), \
+             patch.object(TUData, 'update_daily', new = self.update_daily_mock), \
              patch.object(TUData, 'get_stock_list', new = self.get_stock_list_mock):
 
             cmd = Command(Parameters(['update', '20200201', '20221031']))
@@ -317,6 +360,9 @@ class testFetch(unittest.TestCase):
     def setUp(self):
         self.updated_stocks = list(list())
 
+    def init_TUData(self):
+        pass
+
     def get_stock_list_of_exchange_mock(self, exchange):
         if exchange == "SSE":
             self.stock_list = ["500001.SH", "500002.SH", "500003.SH"]
@@ -324,7 +370,8 @@ class testFetch(unittest.TestCase):
             self.stock_list = ["500004.SZ", "500005.SZ", "500006.SZ"]
 
     def test_fetch(self):
-        with patch.object(TUData, 'get_stock_list_of_exchange', new = self.get_stock_list_of_exchange_mock):
+        with patch.object(TUData, '__init__', new = self.init_TUData), \
+             patch.object(TUData, 'get_stock_list_of_exchange', new = self.get_stock_list_of_exchange_mock):
 
             cmd = Command(Parameters(['fetch', 'SH']))
             self.assertEqual(cmd.get_state(), State.DONE)
