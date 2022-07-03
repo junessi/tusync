@@ -53,7 +53,7 @@ class UpdateTo:
         a.execute()
         end_time = time.time()
         print("updated {0} stocks in {1} from {2} took {3} second(s).".format(len(stock_codes),
-                                                                              exchange,
+                                                                              ",".join(exchanges),
                                                                               from_date,
                                                                               end_time - start_time))
 
@@ -112,7 +112,7 @@ class UpdateFrom:
         end_time = time.time()
 
         print("updated {0} stocks in {1} from {2} took {3} second(s).".format(len(stock_codes),
-                                                                              exchange,
+                                                                              ",".join(exchanges),
                                                                               from_date,
                                                                               end_time - start_time))
 
