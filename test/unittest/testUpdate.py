@@ -358,7 +358,7 @@ class testUpdateFromToDate(unittest.TestCase):
 
 class testFetch(unittest.TestCase):
     def setUp(self):
-        self.updated_stocks = list(list())
+        self.stock_list = list(list())
 
     def init_TUData(self):
         pass

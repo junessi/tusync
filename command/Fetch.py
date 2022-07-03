@@ -6,7 +6,8 @@ from data.TUData import TUData
 
 class Exchange():
     def __init__(self, exchange):
-        self.exchange = exchange
+        exchange_code = helpers.get_exchange(exchange)
+        self.exchange = exchange if exchange_code == '' else exchange_code
 
     def fetch(self):
         self.fetch_exchange_stock_list()
