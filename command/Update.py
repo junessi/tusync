@@ -32,7 +32,7 @@ class UpdateTo:
             for e in exchanges:
                 for c in td.get_stock_list(e).ts_code:
                     stock_codes.append(c.split('.'))
-                    print("update {0} stocks in exchange {1} from {2} to {3}".format(len(stock_codes), e, from_date, to_date))
+                print("update {0} stocks in exchange {1} from {2} to {3}".format(len(stock_codes), e, from_date, to_date))
         else:
             print("update {0} in exchange {1} from {2} to {3}".format(stock_code, exchange, from_date, to_date))
             stock_codes.append([stock_code, exchange])
@@ -53,9 +53,9 @@ class UpdateTo:
         a.execute()
         end_time = time.time()
         print("updated {0} stocks in {1} from {2} took {3} second(s).".format(len(stock_codes),
-                                                                                  exchange,
-                                                                                  from_date,
-                                                                                  end_time - start_time))
+                                                                              exchange,
+                                                                              from_date,
+                                                                              end_time - start_time))
 
         return State.DONE
 
@@ -94,26 +94,27 @@ class UpdateFrom:
 
         if stock_code == '':
             for e in exchanges:
-                stock_codes = stock_codes + [c.split('.')[0] for c in td.get_stock_list(e).ts_code]
-            print("update {0} stocks in exchange {1} from {2}".format(len(stock_codes), e, from_date))
+                for c in td.get_stock_list(e).ts_code:
+                    stock_codes.append(c.split('.'))
+                print("update {0} stocks in exchange {1} from {2}".format(len(stock_codes), e, from_date))
         else:
             print("update {0} in exchange {1} from {2}".format(stock_code, exchange, from_date))
-            stock_codes.append(stock_code)
+            stock_codes.append([stock_code, exchange])
 
-        for s in stock_codes:
+        for c, e in stock_codes:
             for decade in DECADES:
                 if int(from_date) > decade['end']:
                     continue
 
-                a.push(Task(td.update_daily, exchange, s, '', from_date, ''))
+                a.push(Task(td.update_daily, e, c, '', from_date, ''))
 
         a.execute()
         end_time = time.time()
 
         print("updated {0} stocks in {1} from {2} took {3} second(s).".format(len(stock_codes),
-                                                                                  exchange,
-                                                                                  from_date,
-                                                                                  end_time - start_time))
+                                                                              exchange,
+                                                                              from_date,
+                                                                              end_time - start_time))
 
         return State.DONE
 
