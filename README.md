@@ -25,6 +25,10 @@ fetch latest stock list of an exchange:
 ```
 tusync fetch SZ # fetch latest stock list of Shenzhen Stock Exchange
 ```
+fetch latest stock list of all exchanges:
+```
+tusync fetch # fetch latest stock list of all Stock Exchanges
+```
 
 ### update
 update today's stocks in all exchanges(same as "update today"):

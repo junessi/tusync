@@ -16,7 +16,6 @@ class TUData():
     call_ts_lock = threading.Lock()
 
     def __init__(self):
-        print("-------------> init TUData")
         config = read_config()
         self.pro = tushare.pro_api(config["token"])
         self.database = Database()
@@ -84,6 +83,7 @@ class TUData():
         return [date for date in df.cal_date]
 
     def get_stock_list_of_exchange(self, exchange):
+        print("fetch stock list of {0}".format(exchange))
         if exchange in EXCHANGES:
             try:
                 fields = 'exchange,symbol,name,enname,fullname,list_date,delist_date'
