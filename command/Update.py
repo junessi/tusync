@@ -144,9 +144,10 @@ class UpdateStock:
                     if last_date > decade['end']:
                         continue
 
-                    from_date = "{0}".format(last_date)
-                    to_date = "{0}".format(today)
-                    a.push(Task(td.update_daily, exchange, stock_code, '', from_date, to_date))
+                    from_date = last_date if last_date > decade['start'] else decade['start']
+                    to_date = today if today < decade['end'] else decade['end']
+                    a.push(Task(td.update_daily, exchange, stock_code, '', str(from_date), str(to_date)))
+                    last_date = to_date + 1
 
                 a.execute()
                 end_time = time.time()
