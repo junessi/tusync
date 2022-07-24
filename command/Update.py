@@ -49,6 +49,7 @@ class UpdateTo:
                     break
 
                 a.push(Task(td.update_daily, e, c, '', from_date, to_date))
+                a.push(Task(td.update_money_flow, e, c, from_date, to_date))
 
         a.execute()
         end_time = time.time()
@@ -147,6 +148,7 @@ class UpdateStock:
                     from_date = last_date if last_date > decade['start'] else decade['start']
                     to_date = today if today < decade['end'] else decade['end']
                     a.push(Task(td.update_daily, exchange, stock_code, '', str(from_date), str(to_date)))
+                    a.push(Task(td.update_money_flow, exchange, stock_code, str(from_date), str(to_date)))
                     last_date = to_date + 1
 
                 a.execute()
@@ -182,6 +184,7 @@ class UpdateExchange:
                         from_date = "{0}".format(decade['start'])
                         to_date = "{0}".format(decade['end'])
                         a.push(Task(td.update_daily, exchange, stock_code, '', from_date, to_date))
+                        a.push(Task(td.update_money_flow, exchange, stock_code, from_date, to_date))
                 end_time = time.time()
                 print("updated {0} stocks in exchange {1} since opening took {2} second(s)".format(len(stock_codes),
                                                                                                    exchange,
@@ -276,6 +279,7 @@ class Update:
         for stock_code in stock_codes:
             # td.update_daily(exchange, stock_code, start_date = date_from, end_date = date_to)
             a.push(Task(td.update_daily, exchange, stock_code, '', date_from, date_to))
+            a.push(Task(td.update_money_flow, exchange, stock_code, date_from, date_to))
         a.execute()
         end_time = time.time()
         print("updated {0} stocks in {1} from {2} to {3} took {4} second(s).".format(len(stock_codes),

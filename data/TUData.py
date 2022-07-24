@@ -76,6 +76,39 @@ class TUData():
 
         return num_updated
 
+    def update_money_flow(self, exchange, stock_code, start_date, end_date):
+        max_retries = 10 # max retries
+        retry = 1
+        num_updated = 0
+        while retry <= max_retries:
+            try:
+                self.wait_for_available_call()
+                print("update_money_flow(exchange = '{0}', stock_code = '{1}', start_date = '{2}', end_date = '{3}')."
+                      .format(exchange, stock_code, start_date, end_date))
+
+                fields = 'ts_code, trade_date, buy_sm_vol, buy_sm_amount, sell_sm_vol, sell_sm_amount, buy_md_vol,' \
+                         'buy_md_amount, sell_md_vol, sell_md_amount, buy_lg_vol, buy_lg_amount, sell_lg_vol, sell_lg_amount,' \
+                         'buy_elg_vol, buy_elg_amount, sell_elg_vol, sell_elg_amount, net_mf_vol, net_mf_amount, trade_count'
+                ts_code = "{0}.{1}".format(stock_code, exchange)
+
+                result = self.pro.moneyflow(ts_code = ts_code,
+                                            start_date = start_date,
+                                            end_date = end_date,
+                                            fields = fields)
+
+                num_updated = self.database.save_money_flow(result)
+                break
+            except BaseException as e:
+                print("update_money_flow(): Exception caught: {0}".format(e))
+                print("update_money_flow(): retry: {0}".format(retry))
+                retry = retry + 1
+                time.sleep(60)
+
+        if retry == max_retries:
+            print("update_money_flow() failed, max retries reached.")
+
+        return num_updated
+
     def get_open_dates(self, exchange, start_date, end_date):
         self.wait_for_available_call()
 

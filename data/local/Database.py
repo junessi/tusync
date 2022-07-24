@@ -1,6 +1,7 @@
 from common.config import read_config
 from data.local.table.Daily import DailySSE, DailySZSE
 from data.local.table.Stock import StockSSE, StockSZSE
+from data.local.table.MoneyFlow import MoneyFlowSSE, MoneyFlowSZSE
 from sqlalchemy import create_engine, desc
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -77,6 +78,73 @@ class Database:
                 session.merge(daily)
         except Exception as e:
             print("save_dailies: caught exception: {0}".format(e))
+            session.rollback()
+        finally:
+            # print("start commit")
+            session.commit()
+        # print("finished saving {0} stocks in to database".format(num_stocks))
+
+        return num_stocks
+
+    def save_money_flow(self, result):
+        session = self.create_session()
+        num_stocks = len(result.ts_code)
+
+        try:
+            for i in range(0, num_stocks):
+                stock_code = result.ts_code[i]
+                daily = None
+                if stock_code.endswith('.SH'):
+                    daily = MoneyFlowSSE(stock_code         = stock_code[:-3],
+                                         trade_date         = result.trade_date[i],
+                                         buy_sm_vol         = result.buy_sm_vol[i],
+                                         buy_sm_amount      = result.buy_sm_amount[i],
+                                         sell_sm_vol        = result.sell_sm_vol[i],
+                                         sell_sm_amount     = result.sell_sm_amount[i],
+                                         buy_md_vol         = result.buy_md_vol[i],
+                                         buy_md_amount      = result.buy_md_amount[i],
+                                         sell_md_vol        = result.sell_md_vol[i],
+                                         sell_md_amount     = result.sell_md_amount[i],
+                                         buy_lg_vol         = result.buy_lg_vol[i],
+                                         buy_lg_amount      = result.buy_lg_amount[i],
+                                         sell_lg_vol        = result.sell_lg_vol[i],
+                                         sell_lg_amount     = result.sell_lg_amount[i],
+                                         buy_elg_vol        = result.buy_elg_vol[i],
+                                         buy_elg_amount     = result.buy_elg_amount[i],
+                                         sell_elg_vol       = result.sell_elg_vol[i],
+                                         sell_elg_amount    = result.sell_elg_amount[i],
+                                         net_mf_vol         = result.net_mf_vol[i],
+                                         net_mf_amount      = result.net_mf_amount[i],
+                                         trade_count        = result.trade_count[i])
+                elif stock_code.endswith('.SZ'):
+                    daily = MoneyFlowSZSE(stock_code         = stock_code[:-3],
+                                          trade_date         = result.trade_date[i],
+                                          buy_sm_vol         = result.buy_sm_vol[i],
+                                          buy_sm_amount      = result.buy_sm_amount[i],
+                                          sell_sm_vol        = result.sell_sm_vol[i],
+                                          sell_sm_amount     = result.sell_sm_amount[i],
+                                          buy_md_vol         = result.buy_md_vol[i],
+                                          buy_md_amount      = result.buy_md_amount[i],
+                                          sell_md_vol        = result.sell_md_vol[i],
+                                          sell_md_amount     = result.sell_md_amount[i],
+                                          buy_lg_vol         = result.buy_lg_vol[i],
+                                          buy_lg_amount      = result.buy_lg_amount[i],
+                                          sell_lg_vol        = result.sell_lg_vol[i],
+                                          sell_lg_amount     = result.sell_lg_amount[i],
+                                          buy_elg_vol        = result.buy_elg_vol[i],
+                                          buy_elg_amount     = result.buy_elg_amount[i],
+                                          sell_elg_vol       = result.sell_elg_vol[i],
+                                          sell_elg_amount    = result.sell_elg_amount[i],
+                                          net_mf_vol         = result.net_mf_vol[i],
+                                          net_mf_amount      = result.net_mf_amount[i],
+                                          trade_count        = result.trade_count[i])
+                else:
+                    continue # ignore this stock code
+
+                # This merge() does not seem to be asynchronous between threads, fix it later.
+                session.merge(daily)
+        except Exception as e:
+            print("save_money_flow: caught exception: {0}".format(e))
             session.rollback()
         finally:
             # print("start commit")
