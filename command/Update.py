@@ -108,6 +108,7 @@ class UpdateFrom:
                     continue
 
                 a.push(Task(td.update_daily, e, c, '', from_date, ''))
+                a.push(Task(td.update_money_flow, e, c, from_date, ''))
 
         a.execute()
         end_time = time.time()
