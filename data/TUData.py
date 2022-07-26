@@ -119,7 +119,7 @@ class TUData():
         print("fetch stock list of {0}".format(exchange))
         if exchange in EXCHANGES:
             try:
-                fields = 'exchange,symbol,name,enname,fullname,list_date,delist_date'
+                fields = 'exchange,symbol,name,enname,fullname,list_date,delist_date,industry,area'
                 result = self.pro.stock_basic(exchange = exchange, fields = fields)
                 stock_list = []
                 for i in range(0, len(result.symbol)):
@@ -129,7 +129,9 @@ class TUData():
                                        'name_en': result.enname[i],
                                        'fullname': result.fullname[i],
                                        'list_date': result.list_date[i],
-                                       'delist_date': result.delist_date[i]})
+                                       'delist_date': result.delist_date[i],
+                                       'industry': result.industry[i],
+                                       'area': result.area[i]})
 
             except BaseException as e:
                 print("get_stock_list_of_exchange: exception caught: {0}".format(e))

@@ -13,6 +13,8 @@ class StockSSE(Base):
     fullname = Column(String(128))
     list_date = Column(String(8))
     delist_date = Column(String(8))
+    industry = Column(String(64))
+    area = Column(String(32))
 
 class StockSZSE(Base):
     __tablename__ = 'stock_list_SZSE'
@@ -23,4 +25,6 @@ class StockSZSE(Base):
     fullname = Column(String(128))
     list_date = Column(String(8))
     delist_date = Column(String(8))
+    industry = Column(String(64))
+    area = Column(String(32))
 

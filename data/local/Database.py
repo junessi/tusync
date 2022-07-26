@@ -162,23 +162,28 @@ class Database:
                 exchange = stock_list[i]['exchange']
                 stock = None
                 if exchange == 'SSE':
-                    stock = StockSSE(stock_code    = stock_list[i]['stock_code'],
-                                     name_cn       = stock_list[i]['name_cn'],
-                                     name_en       = stock_list[i]['name_en'],
-                                     fullname      = stock_list[i]['fullname'],
-                                     list_date     = stock_list[i]['list_date'],
-                                     delist_date   = stock_list[i]['delist_date'])
+                    stock = StockSSE(stock_code     = stock_list[i]['stock_code'],
+                                     name_cn        = stock_list[i]['name_cn'],
+                                     name_en        = stock_list[i]['name_en'],
+                                     fullname       = stock_list[i]['fullname'],
+                                     list_date      = stock_list[i]['list_date'],
+                                     delist_date    = stock_list[i]['delist_date'],
+                                     industry       = stock_list[i]['industry'],
+                                     area           = stock_list[i]['area'])
                 elif exchange == 'SZSE':
                     stock = StockSZSE(stock_code    = stock_list[i]['stock_code'],
                                       name_cn       = stock_list[i]['name_cn'],
                                       name_en       = stock_list[i]['name_en'],
                                       fullname      = stock_list[i]['fullname'],
                                       list_date     = stock_list[i]['list_date'],
-                                      delist_date   = stock_list[i]['delist_date'])
+                                      delist_date   = stock_list[i]['delist_date'],
+                                      industry      = stock_list[i]['industry'],
+                                      area          = stock_list[i]['area'])
                 else:
+                    print('Unknown exchange: {0}'.format(exchange))
                     continue # unknow exchange, ignore this stock
 
-                # This merge() does not seem to be asynchronous between threads, fix it later.
+                # This merge() does not seem to be asynchronous, fix it.
                 session.merge(stock)
         except Exception as e:
             print("save_stock_list_of_exchange: caught exception: {0}".format(e))
