@@ -12,12 +12,16 @@ from unittest.mock import patch
 class testUpdate(unittest.TestCase):
     def setUp(self):
         self.updated_stock_codes = list()
+        self.updated_money_flow = list()
 
     def init_TUData(self):
         pass
 
     def update_daily_mock(self, exchange, stock_code, trade_date = '', start_date = '', end_date = ''):
         self.updated_stock_codes.append("{0}.{1}".format(stock_code, exchange))
+
+    def update_money_flow_mock(self, exchange, stock_code, start_date = '', end_date = ''):
+        self.updated_money_flow.append("{0}.{1}".format(stock_code, exchange))
 
     def get_stock_list_mock(self, exchange):
         data = type('', (object, ), {'ts_code': list()})() # anonymous object
@@ -31,11 +35,14 @@ class testUpdate(unittest.TestCase):
     def test_update(self):
         with patch.object(TUData, '__init__', new = self.init_TUData), \
              patch.object(TUData, 'update_daily', new = self.update_daily_mock), \
+             patch.object(TUData, 'update_money_flow', new = self.update_money_flow_mock), \
              patch.object(TUData, 'get_stock_list', new = self.get_stock_list_mock):
             cmd = Command(Parameters(['update']))
             self.assertEqual(cmd.get_state(), State.DONE)
             self.assertEqual(self.updated_stock_codes, ['100001.SSE', '100002.SSE', '100003.SSE',
                                                         '200001.SZSE', '200002.SZSE', '200003.SZSE'])
+            self.assertEqual(self.updated_money_flow, ['100001.SSE', '100002.SSE', '100003.SSE',
+                                                       '200001.SZSE', '200002.SZSE', '200003.SZSE'])
 
 
 class testUpdateFull(unittest.TestCase):
@@ -44,6 +51,9 @@ class testUpdateFull(unittest.TestCase):
 
     def update_daily_mock(self, exchange, stock_code, trade_date = '', start_date = '', end_date = ''):
         self.updated_stocks.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
+
+    def update_money_flow_mock(self, exchange, stock_code, start_date = '', end_date = ''):
+        self.updated_money_flow.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
 
     def get_stock_list_mock(self, exchange):
         data = type('', (object, ), {'ts_code': list()})() # anonymous object
@@ -56,8 +66,10 @@ class testUpdateFull(unittest.TestCase):
 
     def test_update_full(self):
         self.updated_stocks = list(list())
+        self.updated_money_flow = list(list())
         with patch.object(TUData, '__init__', new = self.init_TUData), \
              patch.object(TUData, 'update_daily', new = self.update_daily_mock), \
+             patch.object(TUData, 'update_money_flow', new = self.update_money_flow_mock), \
              patch.object(TUData, 'get_stock_list', new = self.get_stock_list_mock):
             cmd = Command(Parameters(['update', 'full']))
             self.assertEqual(cmd.get_state(), State.DONE)
@@ -125,6 +137,70 @@ class testUpdateFull(unittest.TestCase):
             self.assertEqual(self.updated_stocks[61], ['200001.SZSE', '20200101', '20201231'])
             self.assertEqual(self.updated_stocks[62], ['100001.SSE', '20210101', '20211231'])
             self.assertEqual(self.updated_stocks[63], ['200001.SZSE', '20210101', '20211231'])
+            self.assertEqual(self.updated_money_flow[0],  ['100001.SSE', '19900101', '19901231'])
+            self.assertEqual(self.updated_money_flow[1],  ['200001.SZSE', '19900101', '19901231'])
+            self.assertEqual(self.updated_money_flow[2],  ['100001.SSE', '19910101', '19911231'])
+            self.assertEqual(self.updated_money_flow[3],  ['200001.SZSE', '19910101', '19911231'])
+            self.assertEqual(self.updated_money_flow[4],  ['100001.SSE', '19920101', '19921231'])
+            self.assertEqual(self.updated_money_flow[5],  ['200001.SZSE', '19920101', '19921231'])
+            self.assertEqual(self.updated_money_flow[6],  ['100001.SSE', '19930101', '19931231'])
+            self.assertEqual(self.updated_money_flow[7],  ['200001.SZSE', '19930101', '19931231'])
+            self.assertEqual(self.updated_money_flow[8],  ['100001.SSE', '19940101', '19941231'])
+            self.assertEqual(self.updated_money_flow[9],  ['200001.SZSE', '19940101', '19941231'])
+            self.assertEqual(self.updated_money_flow[10], ['100001.SSE', '19950101', '19951231'])
+            self.assertEqual(self.updated_money_flow[11], ['200001.SZSE', '19950101', '19951231'])
+            self.assertEqual(self.updated_money_flow[12], ['100001.SSE', '19960101', '19961231'])
+            self.assertEqual(self.updated_money_flow[13], ['200001.SZSE', '19960101', '19961231'])
+            self.assertEqual(self.updated_money_flow[14], ['100001.SSE', '19970101', '19971231'])
+            self.assertEqual(self.updated_money_flow[15], ['200001.SZSE', '19970101', '19971231'])
+            self.assertEqual(self.updated_money_flow[16], ['100001.SSE', '19980101', '19981231'])
+            self.assertEqual(self.updated_money_flow[17], ['200001.SZSE', '19980101', '19981231'])
+            self.assertEqual(self.updated_money_flow[18], ['100001.SSE', '19990101', '19991231'])
+            self.assertEqual(self.updated_money_flow[19], ['200001.SZSE', '19990101', '19991231'])
+            self.assertEqual(self.updated_money_flow[20], ['100001.SSE', '20000101', '20001231'])
+            self.assertEqual(self.updated_money_flow[21], ['200001.SZSE', '20000101', '20001231'])
+            self.assertEqual(self.updated_money_flow[22], ['100001.SSE', '20010101', '20011231'])
+            self.assertEqual(self.updated_money_flow[23], ['200001.SZSE', '20010101', '20011231'])
+            self.assertEqual(self.updated_money_flow[24], ['100001.SSE', '20020101', '20021231'])
+            self.assertEqual(self.updated_money_flow[25], ['200001.SZSE', '20020101', '20021231'])
+            self.assertEqual(self.updated_money_flow[26], ['100001.SSE', '20030101', '20031231'])
+            self.assertEqual(self.updated_money_flow[27], ['200001.SZSE', '20030101', '20031231'])
+            self.assertEqual(self.updated_money_flow[28], ['100001.SSE', '20040101', '20041231'])
+            self.assertEqual(self.updated_money_flow[29], ['200001.SZSE', '20040101', '20041231'])
+            self.assertEqual(self.updated_money_flow[30], ['100001.SSE', '20050101', '20051231'])
+            self.assertEqual(self.updated_money_flow[31], ['200001.SZSE', '20050101', '20051231'])
+            self.assertEqual(self.updated_money_flow[32], ['100001.SSE', '20060101', '20061231'])
+            self.assertEqual(self.updated_money_flow[33], ['200001.SZSE', '20060101', '20061231'])
+            self.assertEqual(self.updated_money_flow[34], ['100001.SSE', '20070101', '20071231'])
+            self.assertEqual(self.updated_money_flow[35], ['200001.SZSE', '20070101', '20071231'])
+            self.assertEqual(self.updated_money_flow[36], ['100001.SSE', '20080101', '20081231'])
+            self.assertEqual(self.updated_money_flow[37], ['200001.SZSE', '20080101', '20081231'])
+            self.assertEqual(self.updated_money_flow[38], ['100001.SSE', '20090101', '20091231'])
+            self.assertEqual(self.updated_money_flow[39], ['200001.SZSE', '20090101', '20091231'])
+            self.assertEqual(self.updated_money_flow[40], ['100001.SSE', '20100101', '20101231'])
+            self.assertEqual(self.updated_money_flow[41], ['200001.SZSE', '20100101', '20101231'])
+            self.assertEqual(self.updated_money_flow[42], ['100001.SSE', '20110101', '20111231'])
+            self.assertEqual(self.updated_money_flow[43], ['200001.SZSE', '20110101', '20111231'])
+            self.assertEqual(self.updated_money_flow[44], ['100001.SSE', '20120101', '20121231'])
+            self.assertEqual(self.updated_money_flow[45], ['200001.SZSE', '20120101', '20121231'])
+            self.assertEqual(self.updated_money_flow[46], ['100001.SSE', '20130101', '20131231'])
+            self.assertEqual(self.updated_money_flow[47], ['200001.SZSE', '20130101', '20131231'])
+            self.assertEqual(self.updated_money_flow[48], ['100001.SSE', '20140101', '20141231'])
+            self.assertEqual(self.updated_money_flow[49], ['200001.SZSE', '20140101', '20141231'])
+            self.assertEqual(self.updated_money_flow[50], ['100001.SSE', '20150101', '20151231'])
+            self.assertEqual(self.updated_money_flow[51], ['200001.SZSE', '20150101', '20151231'])
+            self.assertEqual(self.updated_money_flow[52], ['100001.SSE', '20160101', '20161231'])
+            self.assertEqual(self.updated_money_flow[53], ['200001.SZSE', '20160101', '20161231'])
+            self.assertEqual(self.updated_money_flow[54], ['100001.SSE', '20170101', '20171231'])
+            self.assertEqual(self.updated_money_flow[55], ['200001.SZSE', '20170101', '20171231'])
+            self.assertEqual(self.updated_money_flow[56], ['100001.SSE', '20180101', '20181231'])
+            self.assertEqual(self.updated_money_flow[57], ['200001.SZSE', '20180101', '20181231'])
+            self.assertEqual(self.updated_money_flow[58], ['100001.SSE', '20190101', '20191231'])
+            self.assertEqual(self.updated_money_flow[59], ['200001.SZSE', '20190101', '20191231'])
+            self.assertEqual(self.updated_money_flow[60], ['100001.SSE', '20200101', '20201231'])
+            self.assertEqual(self.updated_money_flow[61], ['200001.SZSE', '20200101', '20201231'])
+            self.assertEqual(self.updated_money_flow[62], ['100001.SSE', '20210101', '20211231'])
+            self.assertEqual(self.updated_money_flow[63], ['200001.SZSE', '20210101', '20211231'])
 
             today = int(datetime.today().strftime("%Y%m%d"))
             start_date = "{0}".format(today - (today%10000) + 101) # form YYYY0101
@@ -132,6 +208,9 @@ class testUpdateFull(unittest.TestCase):
             self.assertEqual(self.updated_stocks[-1][0], '200001.SZSE')
             self.assertEqual(self.updated_stocks[-1][1], start_date)
             self.assertEqual(self.updated_stocks[-1][2], end_date)
+            self.assertEqual(self.updated_money_flow[-1][0], '200001.SZSE')
+            self.assertEqual(self.updated_money_flow[-1][1], start_date)
+            self.assertEqual(self.updated_money_flow[-1][2], end_date)
 
 
 class testUpdateLastNDays(unittest.TestCase):
@@ -169,6 +248,7 @@ class testUpdateLastNDays(unittest.TestCase):
 class testUpdateStockCode(unittest.TestCase):
     def setUp(self):
         self.updated_stocks = list(list())
+        self.updated_money_flow = list(list())
 
     def init_TUData(self):
         pass
@@ -179,23 +259,29 @@ class testUpdateStockCode(unittest.TestCase):
     def update_daily_mock(self, exchange, stock_code, trade_date = '', start_date = '', end_date = ''):
         self.updated_stocks.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
 
+    def update_money_flow_mock(self, exchange, stock_code, start_date = '', end_date = ''):
+        self.updated_money_flow.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
+
     def get_last_updated_date_mock(self, exchange, stock_code):
         return 20200101
 
     def test_update_stock_code(self):
         with patch.object(TUData, '__init__', new = self.init_TUData), \
              patch.object(TUData, 'update_daily', new = self.update_daily_mock), \
+             patch.object(TUData, 'update_money_flow', new = self.update_money_flow_mock), \
              patch.object(Database, '__init__', new = self.init_Database), \
              patch.object(Database, 'get_last_updated_date', new = self.get_last_updated_date_mock):
             cmd = Command(Parameters(['update', '600699.SZ']))
             self.assertEqual(cmd.get_state(), State.DONE)
             today = "{}".format(datetime.today().strftime("%Y%m%d"))
             self.assertEqual(self.updated_stocks, [['600699.SZ', '20200102', today]])
+            self.assertEqual(self.updated_money_flow, [['600699.SZ', '20200102', today]])
 
 
 class testUpdateStockCodeYear(unittest.TestCase):
     def setUp(self):
         self.updated_stocks = list(list())
+        self.updated_money_flow = list(list())
 
     def init_TUData(self):
         pass
@@ -203,12 +289,17 @@ class testUpdateStockCodeYear(unittest.TestCase):
     def update_daily_mock(self, exchange, stock_code, trade_date = '', start_date = '', end_date = ''):
         self.updated_stocks.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
 
+    def update_money_flow_mock(self, exchange, stock_code, start_date = '', end_date = ''):
+        self.updated_money_flow.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
+
     def test_update_stock_code(self):
         with patch.object(TUData, '__init__', new = self.init_TUData), \
-             patch.object(TUData, 'update_daily', new = self.update_daily_mock):
+             patch.object(TUData, 'update_daily', new = self.update_daily_mock), \
+             patch.object(TUData, 'update_money_flow', new = self.update_money_flow_mock):
             cmd = Command(Parameters(['update', '600699.SZ', '2011']))
             self.assertEqual(cmd.get_state(), State.DONE)
             self.assertEqual(self.updated_stocks, [['600699.SZ', '20110101', '20111231']])
+            self.assertEqual(self.updated_money_flow, [['600699.SZ', '20110101', '20111231']])
 
 
 class testUpdateStockCodeFromDate(unittest.TestCase):
@@ -218,18 +309,25 @@ class testUpdateStockCodeFromDate(unittest.TestCase):
     def update_daily_mock(self, exchange, stock_code, trade_date = '', start_date = '', end_date = ''):
         self.updated_stocks.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
 
+    def update_money_flow_mock(self, exchange, stock_code, start_date = '', end_date = ''):
+        self.updated_money_flow.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
+
     def test_update_stock_code_from_date(self):
         self.updated_stocks = list(list())
+        self.updated_money_flow = list(list())
         with patch.object(TUData, '__init__', new = self.init_TUData), \
-             patch.object(TUData, 'update_daily', new = self.update_daily_mock):
+             patch.object(TUData, 'update_daily', new = self.update_daily_mock), \
+             patch.object(TUData, 'update_money_flow', new = self.update_money_flow_mock):
             cmd = Command(Parameters(['update', '600688.SZ', '20200621']))
             self.assertEqual(cmd.get_state(), State.DONE)
             self.assertEqual(self.updated_stocks, [['600688.SZ', '20200621', '']])
+            self.assertEqual(self.updated_money_flow, [['600688.SZ', '20200621', '']])
 
 
 class testUpdateStockCodeFromToDate(unittest.TestCase):
     def setUp(self):
         self.updated_stocks = list(list())
+        self.updated_money_flow = list(list())
 
     def init_TUData(self):
         pass
@@ -237,28 +335,38 @@ class testUpdateStockCodeFromToDate(unittest.TestCase):
     def update_daily_mock(self, exchange, stock_code, trade_date = '', start_date = '', end_date = ''):
         self.updated_stocks.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
 
+    def update_money_flow_mock(self, exchange, stock_code, start_date = '', end_date = ''):
+        self.updated_money_flow.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
+
     def test_update_stock_code_from_to_date(self):
         with patch.object(TUData, '__init__', new = self.init_TUData), \
-             patch.object(TUData, 'update_daily', new = self.update_daily_mock):
+             patch.object(TUData, 'update_daily', new = self.update_daily_mock), \
+             patch.object(TUData, 'update_money_flow', new = self.update_money_flow_mock):
             cmd = Command(Parameters(['update', '600688.SZ', '20200621', '20200920']))
             self.assertEqual(cmd.get_state(), State.DONE)
             self.assertEqual(self.updated_stocks, [['600688.SZ', '20200621', '20200920']])
+            self.assertEqual(self.updated_money_flow, [['600688.SZ', '20200621', '20200920']])
 
             self.updated_stocks.clear()
+            self.updated_money_flow.clear()
             cmd = Command(Parameters(['update', '600688.SZ', '20200621', '20220920']))
             self.assertEqual(cmd.get_state(), State.DONE)
-            self.assertEqual(self.updated_stocks, [['600688.SZ', '20200621', '20220920']])
+            self.assertEqual(self.updated_money_flow, [['600688.SZ', '20200621', '20220920']])
 
 
 class testUpdateExchangeFromDate(unittest.TestCase):
     def setUp(self):
         self.updated_stocks = list(list())
+        self.updated_money_flow = list(list())
 
     def init_TUData(self):
         pass
 
     def update_daily_mock(self, exchange, stock_code, trade_date = '', start_date = '', end_date = ''):
         self.updated_stocks.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
+
+    def update_money_flow_mock(self, exchange, stock_code, start_date = '', end_date = ''):
+        self.updated_money_flow.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
 
     def get_stock_list_mock(self, exchange):
         data = type('', (object, ), {'ts_code': list()})() # anonymous object
@@ -272,27 +380,35 @@ class testUpdateExchangeFromDate(unittest.TestCase):
     def test_update_exchange_from_date(self):
         with patch.object(TUData, '__init__', new = self.init_TUData), \
              patch.object(TUData, 'update_daily', new = self.update_daily_mock), \
+             patch.object(TUData, 'update_money_flow', new = self.update_money_flow_mock), \
              patch.object(TUData, 'get_stock_list', new = self.get_stock_list_mock):
 
             cmd = Command(Parameters(['update', 'SH', '20200301']))
             self.assertEqual(cmd.get_state(), State.DONE)
             self.assertEqual(self.updated_stocks, [['300001.SH', '20200301', ''], ['300002.SH', '20200301', ''], ['300003.SH', '20200301', '']])
+            self.assertEqual(self.updated_money_flow, [['300001.SH', '20200301', ''], ['300002.SH', '20200301', ''], ['300003.SH', '20200301', '']])
 
             self.updated_stocks.clear()
+            self.updated_money_flow.clear()
             cmd = Command(Parameters(['update', 'SZ', '20200301']))
             self.assertEqual(cmd.get_state(), State.DONE)
             self.assertEqual(self.updated_stocks, [['300004.SZ', '20200301', ''], ['300005.SZ', '20200301', ''], ['300006.SZ', '20200301', '']])
+            self.assertEqual(self.updated_money_flow, [['300004.SZ', '20200301', ''], ['300005.SZ', '20200301', ''], ['300006.SZ', '20200301', '']])
 
 
 class testUpdateExchangeFromToDate(unittest.TestCase):
     def setUp(self):
         self.updated_stocks = list(list())
+        self.updated_money_flow = list(list())
 
     def init_TUData(self):
         pass
 
     def update_daily_mock(self, exchange, stock_code, trade_date = '', start_date = '', end_date = ''):
         self.updated_stocks.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
+
+    def update_money_flow_mock(self, exchange, stock_code, start_date = '', end_date = ''):
+        self.updated_money_flow.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
 
     def get_stock_list_mock(self, exchange):
         data = type('', (object, ), {'ts_code': list()})() # anonymous object
@@ -306,6 +422,7 @@ class testUpdateExchangeFromToDate(unittest.TestCase):
     def test_update_exchange_from_date(self):
         with patch.object(TUData, '__init__', new = self.init_TUData), \
              patch.object(TUData, 'update_daily', new = self.update_daily_mock), \
+             patch.object(TUData, 'update_money_flow', new = self.update_money_flow_mock), \
              patch.object(TUData, 'get_stock_list', new = self.get_stock_list_mock):
 
             cmd = Command(Parameters(['update', 'SH', '20200301', '20221130']))
@@ -313,24 +430,35 @@ class testUpdateExchangeFromToDate(unittest.TestCase):
             self.assertEqual(self.updated_stocks, [['300001.SH', '20200301', '20221130'],
                                                    ['300002.SH', '20200301', '20221130'],
                                                    ['300003.SH', '20200301', '20221130']])
+            self.assertEqual(self.updated_money_flow, [['300001.SH', '20200301', '20221130'],
+                                                       ['300002.SH', '20200301', '20221130'],
+                                                       ['300003.SH', '20200301', '20221130']])
 
             self.updated_stocks.clear()
+            self.updated_money_flow.clear()
             cmd = Command(Parameters(['update', 'SZ', '20200301', '20221031']))
             self.assertEqual(cmd.get_state(), State.DONE)
             self.assertEqual(self.updated_stocks, [['300004.SZ', '20200301', '20221031'],
                                                    ['300005.SZ', '20200301', '20221031'],
                                                    ['300006.SZ', '20200301', '20221031']])
+            self.assertEqual(self.updated_money_flow, [['300004.SZ', '20200301', '20221031'],
+                                                       ['300005.SZ', '20200301', '20221031'],
+                                                       ['300006.SZ', '20200301', '20221031']])
 
 
 class testUpdateFromDate(unittest.TestCase):
     def setUp(self):
         self.updated_stocks = list(list())
+        self.updated_money_flow = list(list())
 
     def init_TUData(self):
         pass
 
     def update_daily_mock(self, exchange, stock_code, trade_date = '', start_date = '', end_date = ''):
         self.updated_stocks.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
+
+    def update_money_flow_mock(self, exchange, stock_code, start_date = '', end_date = ''):
+        self.updated_money_flow.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
 
     def get_stock_list_mock(self, exchange):
         data = type('', (object, ), {'ts_code': list()})() # anonymous object
@@ -344,6 +472,7 @@ class testUpdateFromDate(unittest.TestCase):
     def test_update_exchange_from_date(self):
         with patch.object(TUData, '__init__', new = self.init_TUData), \
              patch.object(TUData, 'update_daily', new = self.update_daily_mock), \
+             patch.object(TUData, 'update_money_flow', new = self.update_money_flow_mock), \
              patch.object(TUData, 'get_stock_list', new = self.get_stock_list_mock):
 
             cmd = Command(Parameters(['update', '20200201']))
@@ -354,16 +483,26 @@ class testUpdateFromDate(unittest.TestCase):
                                                    ['400004.SZ', '20200201', ''],
                                                    ['400005.SZ', '20200201', ''],
                                                    ['400006.SZ', '20200201', '']])
+            self.assertEqual(self.updated_money_flow, [['400001.SH', '20200201', ''],
+                                                       ['400002.SH', '20200201', ''],
+                                                       ['400003.SH', '20200201', ''],
+                                                       ['400004.SZ', '20200201', ''],
+                                                       ['400005.SZ', '20200201', ''],
+                                                       ['400006.SZ', '20200201', '']])
 
 class testUpdateFromToDate(unittest.TestCase):
     def setUp(self):
         self.updated_stocks = list(list())
+        self.updated_money_flow = list(list())
 
     def init_TUData(self):
         pass
 
     def update_daily_mock(self, exchange, stock_code, trade_date = '', start_date = '', end_date = ''):
         self.updated_stocks.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
+
+    def update_money_flow_mock(self, exchange, stock_code, start_date = '', end_date = ''):
+        self.updated_money_flow.append(["{0}.{1}".format(stock_code, exchange), start_date, end_date])
 
     def get_stock_list_mock(self, exchange):
         data = type('', (object, ), {'ts_code': list()})() # anonymous object
@@ -377,6 +516,7 @@ class testUpdateFromToDate(unittest.TestCase):
     def test_update_exchange_from_date(self):
         with patch.object(TUData, '__init__', new = self.init_TUData), \
              patch.object(TUData, 'update_daily', new = self.update_daily_mock), \
+             patch.object(TUData, 'update_money_flow', new = self.update_money_flow_mock), \
              patch.object(TUData, 'get_stock_list', new = self.get_stock_list_mock):
 
             cmd = Command(Parameters(['update', '20200201', '20221031']))
@@ -387,5 +527,11 @@ class testUpdateFromToDate(unittest.TestCase):
                                                    ['400004.SZ', '20200201', '20221031'],
                                                    ['400005.SZ', '20200201', '20221031'],
                                                    ['400006.SZ', '20200201', '20221031']])
+            self.assertEqual(self.updated_money_flow, [['400001.SH', '20200201', '20221031'],
+                                                       ['400002.SH', '20200201', '20221031'],
+                                                       ['400003.SH', '20200201', '20221031'],
+                                                       ['400004.SZ', '20200201', '20221031'],
+                                                       ['400005.SZ', '20200201', '20221031'],
+                                                       ['400006.SZ', '20200201', '20221031']])
 
 
