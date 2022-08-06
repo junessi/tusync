@@ -6,6 +6,8 @@ def printUpdateUsage():
     print("  - full: update all stocks in all exchanges in the whole history.")
     print("  - today: update all stocks in all exchanges today.")
     print("  - -N: update all stocks in all exchanges in the last N days, today is included.")
+    print("tusync update [start date]")
+    print("  - update all stocks in all exchanges from given date.")
     print("tusync update [start date] [end date]")
     print("  - update all stocks in all exchanges in a date range.")
     print("tusync update [stock code]")
